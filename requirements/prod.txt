@@ -1,0 +1,4 @@
+-r base.txt
+
+# Migrations (run manually in deployment)
+alembic>=1.14.0

@@ -1,0 +1,384 @@
+{
+  "info": {
+    "name": "Travel Balance Sheet API",
+    "description": "API para control de gastos e ingresos por viajes.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "trip_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login (auto-saves token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "",
+                  "if (res.access_token) {",
+                  "    pm.collectionVariables.set('access_token', res.access_token);",
+                  "    console.log('Token saved to collection variable access_token');",
+                  "}",
+                  "",
+                  "pm.test('Login successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(res).to.have.property('access_token');",
+                  "    pm.expect(res.user).to.have.property('email');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@demo.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Trips",
+      "item": [
+        {
+          "name": "List Trips (auto-saves first trip_id)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "",
+                  "if (Array.isArray(res) && res.length > 0) {",
+                  "    const inProgress = res.find(t => t.status === 'in_progress');",
+                  "    const tripId = inProgress ? inProgress.id : res[0].id;",
+                  "    pm.collectionVariables.set('trip_id', tripId);",
+                  "    console.log('trip_id saved:', tripId);",
+                  "}",
+                  "",
+                  "pm.test('Trips listed', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(res).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/trips",
+              "host": ["{{base_url}}"],
+              "path": ["api", "trips"]
+            }
+          }
+        },
+        {
+          "name": "Create Trip",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"load_date\": \"2026-02-23\",\n  \"load_time\": \"09:00\",\n  \"folio\": \"FOL-TEST\",\n  \"origin_name\": \"CDMX\",\n  \"load_company\": \"Empresa Test\",\n  \"destination_name\": \"Monterrey\",\n  \"delivery_client\": \"Cliente Test\",\n  \"unit_type\": \"Tractocamión\",\n  \"driver_id\": \"REPLACE_WITH_DRIVER_ID\",\n  \"truck\": \"CARRO-01\",\n  \"trailer\": \"CAJA-01\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/trips",
+              "host": ["{{base_url}}"],
+              "path": ["api", "trips"]
+            }
+          }
+        },
+        {
+          "name": "Get Trip Detail",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/trips/{{trip_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "trips", "{{trip_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Movements (Driver Spending)",
+      "item": [
+        {
+          "name": "Register Expense - Combustible (Diesel)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expense created', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.type).to.eql('expense');",
+                  "    pm.expect(res.concept).to.include('Combustible');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "type", "value": "expense", "type": "text" },
+                { "key": "concept", "value": "Combustible (Diesel)", "type": "text" },
+                { "key": "amount", "value": "8450.00", "type": "text" },
+                { "key": "currency", "value": "MXN", "type": "text" },
+                { "key": "movement_date", "value": "2026-02-23", "type": "text" },
+                { "key": "evidence", "type": "file", "src": "", "disabled": true }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/trips/{{trip_id}}/movements",
+              "host": ["{{base_url}}"],
+              "path": ["api", "trips", "{{trip_id}}", "movements"]
+            }
+          }
+        },
+        {
+          "name": "Register Expense - Casetas (CAPUFE)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expense created', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "type", "value": "expense", "type": "text" },
+                { "key": "concept", "value": "Casetas (CAPUFE)", "type": "text" },
+                { "key": "amount", "value": "3200.00", "type": "text" },
+                { "key": "currency", "value": "MXN", "type": "text" },
+                { "key": "movement_date", "value": "2026-02-23", "type": "text" },
+                { "key": "evidence", "type": "file", "src": "", "disabled": true }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/trips/{{trip_id}}/movements",
+              "host": ["{{base_url}}"],
+              "path": ["api", "trips", "{{trip_id}}", "movements"]
+            }
+          }
+        },
+        {
+          "name": "Register Expense - Viáticos (Alimentos)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Expense created', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "type", "value": "expense", "type": "text" },
+                { "key": "concept", "value": "Viáticos (Alimentos)", "type": "text" },
+                { "key": "amount", "value": "850.00", "type": "text" },
+                { "key": "currency", "value": "MXN", "type": "text" },
+                { "key": "movement_date", "value": "2026-02-23", "type": "text" },
+                { "key": "evidence", "type": "file", "src": "", "disabled": true }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/trips/{{trip_id}}/movements",
+              "host": ["{{base_url}}"],
+              "path": ["api", "trips", "{{trip_id}}", "movements"]
+            }
+          }
+        },
+        {
+          "name": "Register Income - Flete",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "type", "value": "income", "type": "text" },
+                { "key": "concept", "value": "Flete principal", "type": "text" },
+                { "key": "amount", "value": "45000.00", "type": "text" },
+                { "key": "currency", "value": "MXN", "type": "text" },
+                { "key": "movement_date", "value": "2026-02-23", "type": "text" },
+                { "key": "evidence", "type": "file", "src": "", "disabled": true }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/trips/{{trip_id}}/movements",
+              "host": ["{{base_url}}"],
+              "path": ["api", "trips", "{{trip_id}}", "movements"]
+            }
+          }
+        },
+        {
+          "name": "Register Expense - Hospedaje",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "type", "value": "expense", "type": "text" },
+                { "key": "concept", "value": "Hospedaje (Hotel)", "type": "text" },
+                { "key": "amount", "value": "1200.00", "type": "text" },
+                { "key": "currency", "value": "MXN", "type": "text" },
+                { "key": "movement_date", "value": "2026-02-23", "type": "text" },
+                { "key": "evidence", "type": "file", "src": "", "disabled": true }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/trips/{{trip_id}}/movements",
+              "host": ["{{base_url}}"],
+              "path": ["api", "trips", "{{trip_id}}", "movements"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Evidence Review",
+      "item": [
+        {
+          "name": "Reject Movement Evidence",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Movement rejected', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.evidence_status).to.eql('rejected');",
+                  "    pm.expect(res.rejection_reason).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rejection_reason\": \"Ticket ilegible, favor de reenviar foto más clara\",\n  \"notify_whatsapp\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/trips/{{trip_id}}/movements/REPLACE_WITH_MOVEMENT_ID/reject",
+              "host": ["{{base_url}}"],
+              "path": ["api", "trips", "{{trip_id}}", "movements", "REPLACE_WITH_MOVEMENT_ID", "reject"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Drivers",
+      "item": [
+        {
+          "name": "List Drivers",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/drivers",
+              "host": ["{{base_url}}"],
+              "path": ["api", "drivers"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
