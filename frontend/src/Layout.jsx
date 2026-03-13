@@ -11,17 +11,14 @@ export default function Layout({ useAuth }) {
 
   const navItems = [
     { to: '/', icon: 'dashboard', label: 'Dashboard', end: true },
-    { to: '/mapa', icon: 'map', label: 'Viajes' },
     { to: '/miembros', icon: 'people', label: 'Conductores', adminOnly: true },
-    { to: '#', icon: 'account_balance_wallet', label: 'Finanzas' },
-    { to: '#', icon: 'settings', label: 'Configuración' },
   ]
 
   return (
     <>
       {/* Sidebar */}
       <aside className="fixed left-0 top-0 h-full w-20 bg-white border-r border-slate-200 flex flex-col items-center py-6 z-50">
-        <div className="mb-10 text-primary">
+        <div className="mb-10 text-brand-teal-accent">
           <span className="material-icons text-4xl">local_shipping</span>
         </div>
         <nav className="flex flex-col gap-8">
@@ -34,10 +31,9 @@ export default function Layout({ useAuth }) {
                 end={item.end}
                 title={item.label}
                 className={({ isActive }) =>
-                  `p-3 rounded-xl transition-colors ${
-                    isActive
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-slate-400 hover:text-primary'
+                  `p-3 rounded-xl transition-colors ${isActive
+                    ? 'bg-brand-teal-accent/10 text-brand-teal-accent'
+                    : 'text-slate-400 hover:text-brand-teal-accent'
                   }`
                 }
               >
@@ -57,7 +53,7 @@ export default function Layout({ useAuth }) {
       </aside>
 
       {/* Main content */}
-      <main className="ml-20 p-8 min-h-screen bg-background-light font-display">
+      <main className="ml-20 p-8 min-h-screen bg-brand-cream font-display">
         <Outlet />
       </main>
     </>

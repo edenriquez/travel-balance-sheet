@@ -12,6 +12,7 @@ from src.auth.router import router as auth_router
 from src.companies.router import router as companies_router
 from src.drivers.router import router as drivers_router
 from src.trips.router import router as trips_router
+from src.whatsapp.router import router as whatsapp_router
 
 
 @asynccontextmanager
@@ -55,3 +56,4 @@ app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
 app.include_router(companies_router, prefix="/api/companies", tags=["companies"])
 app.include_router(drivers_router, prefix="/api/drivers", tags=["drivers"])
 app.include_router(trips_router, prefix="/api/trips", tags=["trips"])
+app.include_router(whatsapp_router, prefix="/api/whatsapp", tags=["whatsapp"])

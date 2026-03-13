@@ -82,7 +82,7 @@ export default function Dashboard() {
             <span className="material-icons text-sm">download</span>
             Exportar Reporte
           </button>
-          <button onClick={() => setShowNewTrip(true)} className="bg-primary text-white px-5 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
+          <button onClick={() => setShowNewTrip(true)} className="bg-brand-teal-accent text-white px-5 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 shadow-lg shadow-brand-teal-accent/20 hover:bg-brand-teal-accent/90 transition-all">
             <span className="material-icons text-sm">add</span>
             Nuevo Viaje
           </button>
@@ -93,7 +93,7 @@ export default function Dashboard() {
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
           <div className="flex justify-between items-start mb-4">
-            <div className="p-2 bg-primary/10 rounded-lg text-primary">
+            <div className="p-2 bg-brand-teal-accent/10 rounded-lg text-brand-teal-accent">
               <span className="material-icons">route</span>
             </div>
           </div>
@@ -126,7 +126,7 @@ export default function Dashboard() {
           <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase">Fecha Inicio</label>
           <div className="relative">
             <input
-              className="w-full bg-slate-50 border-none rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 ring-primary"
+              className="w-full bg-slate-50 border-none rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 ring-brand-teal-accent"
               type="date"
               value={filters.start_date}
               onChange={(e) => setFilters((f) => ({ ...f, start_date: e.target.value }))}
@@ -138,7 +138,7 @@ export default function Dashboard() {
           <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase">Fecha Fin</label>
           <div className="relative">
             <input
-              className="w-full bg-slate-50 border-none rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 ring-primary"
+              className="w-full bg-slate-50 border-none rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 ring-brand-teal-accent"
               type="date"
               value={filters.end_date}
               onChange={(e) => setFilters((f) => ({ ...f, end_date: e.target.value }))}
@@ -149,7 +149,7 @@ export default function Dashboard() {
         <div className="flex-1 min-w-[200px]">
           <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase">Conductor</label>
           <select
-            className="w-full bg-slate-50 border-none rounded-lg py-2 px-4 text-sm focus:ring-2 ring-primary appearance-none"
+            className="w-full bg-slate-50 border-none rounded-lg py-2 px-4 text-sm focus:ring-2 ring-brand-teal-accent appearance-none"
             value={filters.driver_id}
             onChange={(e) => setFilters((f) => ({ ...f, driver_id: e.target.value }))}
           >
@@ -232,7 +232,7 @@ export default function Dashboard() {
                   return (
                     <tr key={trip.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-4">
-                        <Link to={`/viaje/${trip.id}`} className="font-mono font-bold text-primary hover:underline">
+                        <Link to={`/viaje/${trip.id}`} className="font-mono font-bold text-brand-teal-accent hover:underline">
                           #{trip.id}
                         </Link>
                       </td>

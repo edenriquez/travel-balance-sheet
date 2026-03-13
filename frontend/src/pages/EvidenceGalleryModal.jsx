@@ -50,7 +50,7 @@ export default function EvidenceGalleryModal({ open, items, startIndex, onClose 
       <div className="relative z-10 flex items-center justify-between px-6 py-4 bg-black/40">
         <div className="flex items-center gap-4 text-white min-w-0">
           <div className="flex items-center gap-2">
-            <span className="material-icons text-primary">image</span>
+            <span className="material-icons text-brand-teal-accent">image</span>
             <h3 className="font-bold text-lg truncate">{current.concept}</h3>
           </div>
           <span className="text-white/50">|</span>
@@ -115,7 +115,7 @@ export default function EvidenceGalleryModal({ open, items, startIndex, onClose 
                 onClick={() => { setImgLoaded(false); setIndex(i) }}
                 className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all shrink-0 ${
                   i === index
-                    ? 'border-primary ring-2 ring-primary/30 scale-105'
+                    ? 'border-brand-teal-accent ring-2 ring-brand-teal-accent/30 scale-105'
                     : 'border-transparent opacity-60 hover:opacity-100'
                 }`}
               >

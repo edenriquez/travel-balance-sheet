@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { getTrip, getDrivers } from '../api'
+import { getTrip, getDrivers, approveMovement } from '../api'
 import RejectMovementModal from './RejectMovementModal'
 import EvidenceGalleryModal from './EvidenceGalleryModal'
 
@@ -100,9 +100,9 @@ export default function TripDetail() {
         <div className="space-y-1">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-2 text-sm text-slate-500 mb-2">
-            <Link to="/" className="hover:text-primary transition-colors">Panel de Control</Link>
+            <Link to="/" className="hover:text-brand-teal-accent transition-colors">Panel de Control</Link>
             <span className="material-icons text-xs">chevron_right</span>
-            <Link to="/" className="hover:text-primary transition-colors">Viajes Activos</Link>
+            <Link to="/" className="hover:text-brand-teal-accent transition-colors">Viajes Activos</Link>
             <span className="material-icons text-xs">chevron_right</span>
             <span className="text-slate-900 font-medium">Folio #{folio}</span>
           </nav>
@@ -132,7 +132,7 @@ export default function TripDetail() {
             Imprimir
           </button>
           {!isClosed && (
-            <button className="flex-1 md:flex-none px-6 py-2.5 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary/90 transition-all shadow-sm shadow-primary/20 flex items-center justify-center gap-2" disabled>
+            <button className="flex-1 md:flex-none px-6 py-2.5 bg-brand-teal-accent text-white text-sm font-bold rounded-lg hover:bg-brand-teal-accent/90 transition-all shadow-sm shadow-brand-teal-accent/20 flex items-center justify-center gap-2" disabled>
               <span className="material-icons text-lg">check_circle</span>
               Cerrar Viaje
             </button>
@@ -146,7 +146,7 @@ export default function TripDetail() {
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between mb-2">
             <p className="text-slate-500 text-sm font-medium">Ingresos Totales (Flete)</p>
-            <div className="text-primary bg-primary/10 p-1.5 rounded-lg">
+            <div className="text-brand-teal-accent bg-brand-teal-accent/10 p-1.5 rounded-lg">
               <span className="material-icons">payments</span>
             </div>
           </div>
@@ -172,7 +172,7 @@ export default function TripDetail() {
         </div>
 
         {/* Utilidad Neta Estimada */}
-        <div className="bg-primary text-white p-6 rounded-xl border border-primary shadow-lg shadow-primary/10">
+        <div className="bg-brand-teal-accent text-white p-6 rounded-xl border border-brand-teal-accent shadow-lg shadow-brand-teal-accent/10">
           <div className="flex items-center justify-between mb-2">
             <p className="text-white/80 text-sm font-medium">Utilidad Neta Estimada</p>
             <div className="bg-white/20 p-1.5 rounded-lg">
@@ -193,7 +193,7 @@ export default function TripDetail() {
         <div className="lg:col-span-4 space-y-6">
           <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
             <div className="p-4 border-b border-slate-100 flex items-center gap-3">
-              <span className="material-icons text-primary">person</span>
+              <span className="material-icons text-brand-teal-accent">person</span>
               <h3 className="font-bold text-slate-900">Información del Operador</h3>
             </div>
             <div className="p-5 flex items-center gap-4">
@@ -225,7 +225,7 @@ export default function TripDetail() {
               <div className="flex items-center gap-3">
                 <h2 className="text-xl font-bold text-slate-900">Gastos del Chofer</h2>
               </div>
-              <button className="text-primary text-sm font-semibold flex items-center gap-1 hover:underline" disabled>
+              <button className="text-brand-teal-accent text-sm font-semibold flex items-center gap-1 hover:underline" disabled>
                 <span className="material-icons text-lg">add_box</span>
                 Registrar Gasto Manual
               </button>
@@ -240,7 +240,7 @@ export default function TripDetail() {
                       <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right">Monto</th>
                       <th className="px-4 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">Evidencia</th>
                       <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Acciones</th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">Acciones</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -286,7 +286,7 @@ export default function TripDetail() {
                             {m.evidence_url ? (
                               <button
                                 onClick={() => setGalleryIndex(galleryIdx)}
-                                className="group relative inline-block rounded-lg overflow-hidden border-2 border-slate-200 hover:border-primary transition-colors"
+                                className="group relative inline-block rounded-lg overflow-hidden border-2 border-slate-200 hover:border-brand-teal-accent transition-colors"
                               >
                                 <img
                                   src={m.evidence_url}
@@ -309,14 +309,28 @@ export default function TripDetail() {
                             </span>
                           </td>
                           <td className="px-6 py-4">
-                            {status !== 'rejected' && !isClosed && (
-                              <button
-                                onClick={() => setRejectTarget(m)}
-                                className="text-red-500 hover:text-red-700 text-xs font-semibold flex items-center gap-1 hover:bg-red-50 px-2 py-1 rounded transition-colors"
-                              >
-                                <span className="material-icons text-sm">block</span>
-                                Rechazar
-                              </button>
+                            {status === 'pending' && !isClosed && (
+                              <div className="flex items-center justify-center gap-2">
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      await approveMovement(id, m.id)
+                                      loadTrip()
+                                    } catch {}
+                                  }}
+                                  className="w-7 h-7 flex items-center justify-center rounded-full bg-emerald-100 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all"
+                                  title="Aprobar"
+                                >
+                                  <span className="material-symbols-outlined text-sm font-bold">check</span>
+                                </button>
+                                <button
+                                  onClick={() => setRejectTarget(m)}
+                                  className="w-7 h-7 flex items-center justify-center rounded-full bg-rose-100 text-rose-600 hover:bg-rose-600 hover:text-white transition-all"
+                                  title="Rechazar"
+                                >
+                                  <span className="material-symbols-outlined text-sm font-bold">close</span>
+                                </button>
+                              </div>
                             )}
                           </td>
                         </tr>
@@ -338,10 +352,10 @@ export default function TripDetail() {
           </section>
 
           {/* Liquidación Final */}
-          <div className="bg-primary/5 border border-primary/20 p-6 rounded-xl">
+          <div className="bg-brand-teal-accent/5 border border-brand-teal-accent/20 p-6 rounded-xl">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="space-y-1 text-center md:text-left">
-                <h3 className="font-bold text-primary">Liquidación Final {isClosed ? '' : 'Pendiente'}</h3>
+                <h3 className="font-bold text-brand-teal-accent">Liquidación Final {isClosed ? '' : 'Pendiente'}</h3>
                 <p className="text-xs text-slate-500 max-w-sm">
                   Este monto representa lo que el chofer debe reintegrar o cobrar tras comprobar sus gastos contra el anticipo otorgado.
                 </p>
@@ -354,7 +368,7 @@ export default function TripDetail() {
                     <span className="text-xs font-normal">{balance >= 0 ? 'A FAVOR' : 'EN CONTRA'}</span>
                   </p>
                 </div>
-                <button className="px-6 py-3 bg-white text-primary border border-primary/30 rounded-lg font-bold text-sm shadow-sm hover:bg-primary hover:text-white transition-all" disabled>
+                <button className="px-6 py-3 bg-white text-brand-teal-accent border border-brand-teal-accent/30 rounded-lg font-bold text-sm shadow-sm hover:bg-brand-teal-accent hover:text-white transition-all" disabled>
                   Reconciliar Cuentas
                 </button>
               </div>

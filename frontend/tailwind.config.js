@@ -8,6 +8,11 @@ export default {
         primary: '#137fec',
         'background-light': '#f6f7f8',
         'background-dark': '#101922',
+        'brand-teal-dark': '#163333',
+        'brand-teal-accent': '#0d9488',
+        'brand-cream': '#fdfbf7',
+        'brand-cream-dark': '#f5f1ea',
+        'road-black': '#1a1c1e',
       },
       fontFamily: {
         display: ['Inter', 'system-ui', 'sans-serif'],

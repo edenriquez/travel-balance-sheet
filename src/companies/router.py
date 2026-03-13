@@ -4,8 +4,14 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.dependencies import get_current_user, require_admin
-from src.companies.schemas import MemberCreate, MemberCreateResponse, MemberResponse
-from src.companies.service import create_member, list_members
+from src.companies.schemas import (
+    DeleteResponse,
+    MemberCreate,
+    MemberCreateResponse,
+    MemberResponse,
+    MemberUpdate,
+)
+from src.companies.service import create_member, delete_member, list_members, update_member
 from src.database import get_db
 
 router = APIRouter()
@@ -27,4 +33,28 @@ async def invite_member(
     session: AsyncSession = Depends(get_db),
 ):
     company_id = UUID(current_user["company_id"])
-    return await create_member(session, company_id, body.email, body.role)
+    return await create_member(
+        session, company_id, body.email, body.role,
+        name=body.name, whatsapp=body.whatsapp,
+    )
+
+
+@router.patch("/current/members/{member_id}", response_model=MemberResponse)
+async def patch_member(
+    member_id: str,
+    body: MemberUpdate,
+    current_user: dict = Depends(require_admin),
+    session: AsyncSession = Depends(get_db),
+):
+    company_id = UUID(current_user["company_id"])
+    return await update_member(session, company_id, UUID(member_id), body.model_dump(exclude_none=True))
+
+
+@router.delete("/current/members/{member_id}", response_model=DeleteResponse)
+async def remove_member(
+    member_id: str,
+    current_user: dict = Depends(require_admin),
+    session: AsyncSession = Depends(get_db),
+):
+    company_id = UUID(current_user["company_id"])
+    return await delete_member(session, company_id, UUID(member_id))

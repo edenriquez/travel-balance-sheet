@@ -7,6 +7,7 @@ import TripDetail from './pages/TripDetail'
 import Members from './pages/Members'
 import SetPassword from './pages/SetPassword'
 import MapView from './pages/MapView'
+import LandingPage from './pages/LandingPage'
 import { getUser, setAuth, clearAuth } from './auth'
 
 function useAuth() {
@@ -36,6 +37,7 @@ function ProtectedRoute({ children }) {
 export default function App() {
   return (
     <Routes>
+      <Route path="/landing" element={<LandingPage />} />
       <Route path="/login" element={<Login useAuth={useAuth} />} />
       <Route path="/establecer-contrasena" element={<SetPassword />} />
       <Route

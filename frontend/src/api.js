@@ -45,6 +45,12 @@ export async function getDrivers() {
   return api('/api/drivers')
 }
 
+export async function approveMovement(tripId, movementId) {
+  return api(`/api/trips/${tripId}/movements/${movementId}/approve`, {
+    method: 'PATCH',
+  })
+}
+
 export async function rejectMovement(tripId, movementId, { rejection_reason, notify_whatsapp }) {
   return api(`/api/trips/${tripId}/movements/${movementId}/reject`, {
     method: 'PATCH',

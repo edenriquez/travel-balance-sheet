@@ -8,7 +8,6 @@ from src.auth.dependencies import get_current_user
 from src.database import get_db
 from src.storage import get_evidence_url, upload_evidence
 from src.trips.schemas import (
-    MovementCreate,
     MovementResponse,
     RejectMovement,
     TripCreate,
@@ -22,6 +21,7 @@ from src.trips.service import (
     get_trip_detail,
     list_trips,
     reject_movement,
+    approve_movement,
     update_trip,
 )
 
@@ -115,7 +115,9 @@ async def post_movement(
     )
 
 
-@router.patch("/{trip_id}/movements/{movement_id}/reject", response_model=MovementResponse)
+@router.patch(
+    "/{trip_id}/movements/{movement_id}/reject", response_model=MovementResponse
+)
 async def reject_movement_endpoint(
     trip_id: str,
     movement_id: str,
@@ -130,6 +132,25 @@ async def reject_movement_endpoint(
         trip_id=UUID(trip_id),
         movement_id=UUID(movement_id),
         rejection_reason=body.rejection_reason,
+        notify_whatsapp=body.notify_whatsapp,
+    )
+
+
+@router.patch(
+    "/{trip_id}/movements/{movement_id}/approve", response_model=MovementResponse
+)
+async def approve_movement_endpoint(
+    trip_id: str,
+    movement_id: str,
+    current_user: dict = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+):
+    company_id = UUID(current_user["company_id"])
+    return await approve_movement(
+        session,
+        company_id=company_id,
+        trip_id=UUID(trip_id),
+        movement_id=UUID(movement_id),
     )
 
 

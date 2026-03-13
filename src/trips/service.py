@@ -8,6 +8,7 @@ from src.exceptions import AppError
 from fastapi import status
 
 from src.models import Driver, Movement, Trip
+from src.whatsapp import send_rejection_notice, send_approval_notice
 
 
 def _to_float(v) -> float:
@@ -205,6 +206,62 @@ async def add_movement(
     }
 
 
+async def _get_driver_for_trip(session: AsyncSession, trip: Trip) -> Driver | None:
+    result = await session.execute(
+        select(Driver).where(Driver.id == trip.driver_id)
+    )
+    return result.scalar_one_or_none()
+
+
+async def approve_movement(
+    session: AsyncSession,
+    *,
+    company_id: UUID,
+    trip_id: UUID,
+    movement_id: UUID,
+) -> dict:
+    result = await session.execute(
+        select(Trip).where(Trip.id == trip_id, Trip.company_id == company_id)
+    )
+    trip = result.scalar_one_or_none()
+    if not trip:
+        raise AppError("trip not found", status_code=status.HTTP_404_NOT_FOUND)
+
+    result = await session.execute(
+        select(Movement).where(Movement.id == movement_id, Movement.trip_id == trip_id)
+    )
+    movement = result.scalar_one_or_none()
+    if not movement:
+        raise AppError(
+            "Movimiento no encontrado", status_code=status.HTTP_404_NOT_FOUND
+        )
+
+    movement.evidence_status = "approved"
+
+    await session.flush()
+
+    driver = await _get_driver_for_trip(session, trip)
+    if driver and driver.whatsapp_phone:
+        await send_approval_notice(
+            to=driver.whatsapp_phone,
+            driver_name=driver.name,
+            concept=movement.concept,
+            amount=_to_float(movement.amount),
+            folio=trip.folio,
+        )
+
+    return {
+        "id": str(movement.id),
+        "type": movement.type,
+        "concept": movement.concept,
+        "amount": _to_float(movement.amount),
+        "currency": movement.currency,
+        "movement_date": movement.movement_date,
+        "evidence_url": movement.evidence_url,
+        "evidence_status": movement.evidence_status,
+    }
+
+
 async def reject_movement(
     session: AsyncSession,
     *,
@@ -212,6 +269,7 @@ async def reject_movement(
     trip_id: UUID,
     movement_id: UUID,
     rejection_reason: str,
+    notify_whatsapp: bool = False,
 ) -> dict:
     result = await session.execute(
         select(Trip).where(Trip.id == trip_id, Trip.company_id == company_id)
@@ -225,13 +283,27 @@ async def reject_movement(
     )
     movement = result.scalar_one_or_none()
     if not movement:
-        raise AppError("Movimiento no encontrado", status_code=status.HTTP_404_NOT_FOUND)
+        raise AppError(
+            "Movimiento no encontrado", status_code=status.HTTP_404_NOT_FOUND
+        )
 
     movement.evidence_status = "rejected"
     movement.rejection_reason = rejection_reason
     movement.rejected_at = datetime.now(timezone.utc)
 
     await session.flush()
+
+    if notify_whatsapp:
+        driver = await _get_driver_for_trip(session, trip)
+        if driver and driver.whatsapp_phone:
+            await send_rejection_notice(
+                to=driver.whatsapp_phone,
+                driver_name=driver.name,
+                concept=movement.concept,
+                amount=_to_float(movement.amount),
+                reason=rejection_reason,
+                folio=trip.folio,
+            )
 
     return {
         "id": str(movement.id),

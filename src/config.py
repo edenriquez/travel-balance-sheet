@@ -27,6 +27,10 @@ class Config(BaseSettings):
     INVITE_TOKEN_EXP_DAYS: int = 7
     FRONTEND_URL: str = "http://localhost:5173"
 
+    # WhatsApp (Kapso)
+    KAPSO_API_KEY: str = ""
+    KAPSO_PHONE_NUMBER_ID: str = ""
+
     # MinIO (S3-compatible storage)
     MINIO_ENDPOINT: str = "localhost:9000"
     MINIO_ACCESS_KEY: str = "minioadmin"
