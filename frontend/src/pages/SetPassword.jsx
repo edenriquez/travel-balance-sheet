@@ -13,17 +13,17 @@ export default function SetPassword() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (!token) setError('Falta el enlace de invitación. Revisa el correo que te enviaron.')
+    if (!token) setError('Falta el enlace de invitacion. Revisa el correo que te enviaron.')
   }, [token])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (password !== confirm) {
-      setError('Las contraseñas no coinciden')
+      setError('Las contrasenas no coinciden')
       return
     }
     if (password.length < 8) {
-      setError('La contraseña debe tener al menos 8 caracteres')
+      setError('La contrasena debe tener al menos 8 caracteres')
       return
     }
     setError('')
@@ -43,19 +43,36 @@ export default function SetPassword() {
   }
 
   return (
-    <div className="app" style={{ paddingTop: '2rem', maxWidth: '400px', margin: '0 auto' }}>
-      <div className="card">
-        <div className="card-body">
-          <h1 className="page-title">Establecer contraseña</h1>
-          <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-            Crea una contraseña para tu cuenta. Luego podrás iniciar sesión con tu correo y esta contraseña.
+    <div className="min-h-screen bg-neutral-100 flex items-center justify-center p-4 font-sans">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="flex items-center justify-center gap-3 mb-8">
+          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary-subtle">
+            <span className="material-icons text-primary-main text-2xl" style={{ transform: 'scaleX(-1)' }}>local_shipping</span>
+          </div>
+          <div className="flex flex-col leading-none">
+            <span className="text-lg font-extrabold text-neutral-900 tracking-tight">Fleet</span>
+            <span className="text-lg font-extrabold text-neutral-900 tracking-tight">Budget</span>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-card p-8">
+          <h1 className="text-xl font-bold text-neutral-900 mb-2">Establecer contrasena</h1>
+          <p className="text-sm text-neutral-500 mb-6">
+            Crea una contrasena para tu cuenta. Luego podras iniciar sesion con tu correo y esta contrasena.
           </p>
+
           {success ? (
-            <p style={{ color: 'var(--success)' }}>Contraseña guardada. Redirigiendo al inicio de sesión…</p>
+            <div className="p-4 bg-success-light text-success-main rounded text-sm font-medium flex items-center gap-2">
+              <span className="material-icons text-lg">check_circle</span>
+              Contrasena guardada. Redirigiendo al inicio de sesion...
+            </div>
           ) : (
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label htmlFor="password">Nueva contraseña</label>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-neutral-900 mb-1.5" htmlFor="password">
+                  Nueva contrasena
+                </label>
                 <input
                   id="password"
                   type="password"
@@ -65,10 +82,13 @@ export default function SetPassword() {
                   minLength={8}
                   autoComplete="new-password"
                   disabled={!token}
+                  className="w-full px-4 py-3 border border-neutral-300 rounded text-sm bg-white focus:border-primary-main focus:ring-2 focus:ring-primary-main/20"
                 />
               </div>
-              <div className="form-group">
-                <label htmlFor="confirm">Confirmar contraseña</label>
+              <div>
+                <label className="block text-sm font-semibold text-neutral-900 mb-1.5" htmlFor="confirm">
+                  Confirmar contrasena
+                </label>
                 <input
                   id="confirm"
                   type="password"
@@ -78,11 +98,20 @@ export default function SetPassword() {
                   minLength={8}
                   autoComplete="new-password"
                   disabled={!token}
+                  className="w-full px-4 py-3 border border-neutral-300 rounded text-sm bg-white focus:border-primary-main focus:ring-2 focus:ring-primary-main/20"
                 />
               </div>
-              {error && <p style={{ color: 'var(--error)', marginBottom: '1rem', fontSize: '0.875rem' }}>{error}</p>}
-              <button type="submit" className="btn btn-primary btn-block" disabled={!token || loading}>
-                {loading ? 'Guardando…' : 'Guardar contraseña'}
+
+              {error && (
+                <div className="p-3 bg-error-light text-error-main rounded text-sm font-medium">{error}</div>
+              )}
+
+              <button
+                type="submit"
+                className="btn btn-primary w-full py-3"
+                disabled={!token || loading}
+              >
+                {loading ? 'Guardando...' : 'Guardar contrasena'}
               </button>
             </form>
           )}

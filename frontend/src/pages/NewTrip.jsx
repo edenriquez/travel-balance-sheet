@@ -35,15 +35,9 @@ export default function NewTripModal({ open, onClose, onCreated }) {
           setForm((f) => ({ ...f, driver_id: f.driver_id || list[0].id }))
         }
       })
-      .catch(() => {
-        if (!cancelled) setDrivers([])
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingDrivers(false)
-      })
-    return () => {
-      cancelled = true
-    }
+      .catch(() => { if (!cancelled) setDrivers([]) })
+      .finally(() => { if (!cancelled) setLoadingDrivers(false) })
+    return () => { cancelled = true }
   }, [open])
 
   const canSubmit = useMemo(() => {
@@ -107,17 +101,15 @@ export default function NewTripModal({ open, onClose, onCreated }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={handleClose} />
+      <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-sm" onClick={handleClose} />
 
-      {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
+      <div className="relative bg-white rounded-xl shadow-dropdown w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-200">
-          <h2 className="text-xl font-bold text-slate-900">Nuevo viaje</h2>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-300/50">
+          <h2 className="text-lg font-bold text-neutral-900">Nuevo viaje</h2>
           <button
             onClick={handleClose}
-            className="p-1 rounded-lg hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600"
+            className="p-1 rounded hover:bg-neutral-200 transition-colors text-neutral-400 hover:text-neutral-600"
           >
             <span className="material-icons">close</span>
           </button>
@@ -143,7 +135,7 @@ export default function NewTripModal({ open, onClose, onCreated }) {
 
             <div className="form-group">
               <label>Origen</label>
-              <input value={form.origin_name} onChange={onChange('origin_name')} placeholder="Ciudad / dirección" required />
+              <input value={form.origin_name} onChange={onChange('origin_name')} placeholder="Ciudad / direccion" required />
             </div>
 
             <div className="form-group">
@@ -153,7 +145,7 @@ export default function NewTripModal({ open, onClose, onCreated }) {
 
             <div className="form-group">
               <label>Destino</label>
-              <input value={form.destination_name} onChange={onChange('destination_name')} placeholder="Ciudad / dirección" required />
+              <input value={form.destination_name} onChange={onChange('destination_name')} placeholder="Ciudad / direccion" required />
             </div>
 
             <div className="form-group">
@@ -164,9 +156,8 @@ export default function NewTripModal({ open, onClose, onCreated }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div className="form-group !mb-0">
                 <label>Tipo de unidad</label>
-                <input value={form.unit_type} onChange={onChange('unit_type')} placeholder="Ej. Tractocamión" required />
+                <input value={form.unit_type} onChange={onChange('unit_type')} placeholder="Ej. Tractocamion" required />
               </div>
-
               <div className="form-group !mb-0">
                 <label>Operador</label>
                 <select value={form.driver_id} onChange={onChange('driver_id')} disabled={loadingDrivers} required>
@@ -175,11 +166,6 @@ export default function NewTripModal({ open, onClose, onCreated }) {
                     <option key={d.id} value={d.id}>{d.name}</option>
                   ))}
                 </select>
-                {drivers.length === 0 && (
-                  <p className="mt-1 text-xs text-slate-400">
-                    No hay conductores cargados (usa el seed o crea drivers primero).
-                  </p>
-                )}
               </div>
             </div>
 
@@ -194,14 +180,14 @@ export default function NewTripModal({ open, onClose, onCreated }) {
               </div>
             </div>
 
-            {error && <p className="text-rose-500 text-sm mt-2">{error}</p>}
+            {error && (
+              <div className="p-3 bg-error-light text-error-main rounded text-sm font-medium mt-2">{error}</div>
+            )}
 
-            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-200">
-              <button type="button" className="btn btn-secondary" onClick={handleClose}>
-                Cancelar
-              </button>
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-neutral-300/50">
+              <button type="button" className="btn btn-ghost" onClick={handleClose}>Cancelar</button>
               <button className="btn btn-primary" type="submit" disabled={!canSubmit || saving}>
-                {saving ? 'Guardando…' : 'Crear viaje'}
+                {saving ? 'Guardando...' : 'Crear viaje'}
               </button>
             </div>
           </form>

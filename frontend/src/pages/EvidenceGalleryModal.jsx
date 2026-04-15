@@ -44,23 +44,23 @@ export default function EvidenceGalleryModal({ open, items, startIndex, onClose 
   return (
     <div className="fixed inset-0 z-50 flex flex-col">
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 bg-neutral-900/90 backdrop-blur-sm" onClick={onClose} />
 
       {/* Header */}
       <div className="relative z-10 flex items-center justify-between px-6 py-4 bg-black/40">
         <div className="flex items-center gap-4 text-white min-w-0">
           <div className="flex items-center gap-2">
-            <span className="material-icons text-brand-teal-accent">image</span>
+            <span className="material-icons text-primary-light">image</span>
             <h3 className="font-bold text-lg truncate">{current.concept}</h3>
           </div>
-          <span className="text-white/50">|</span>
-          <span className="text-white/70 text-sm font-medium">{formatMoney(current.amount)}</span>
-          <span className="text-white/50">|</span>
+          <span className="text-white/30">|</span>
+          <span className="text-white/70 text-sm font-medium tabular-nums">{formatMoney(current.amount)}</span>
+          <span className="text-white/30">|</span>
           <span className="text-white/50 text-sm">{index + 1} / {items.length}</span>
         </div>
         <button
           onClick={onClose}
-          className="text-white/70 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10"
+          className="text-white/70 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10"
         >
           <span className="material-icons text-2xl">close</span>
         </button>
@@ -68,7 +68,6 @@ export default function EvidenceGalleryModal({ open, items, startIndex, onClose 
 
       {/* Image area */}
       <div className="relative z-10 flex-1 flex items-center justify-center px-16 py-6 min-h-0">
-        {/* Prev button */}
         {items.length > 1 && (
           <button
             onClick={goPrev}
@@ -78,7 +77,6 @@ export default function EvidenceGalleryModal({ open, items, startIndex, onClose 
           </button>
         )}
 
-        {/* Image */}
         <div className="relative max-w-full max-h-full flex items-center justify-center">
           {!imgLoaded && (
             <div className="absolute inset-0 flex items-center justify-center">
@@ -94,7 +92,6 @@ export default function EvidenceGalleryModal({ open, items, startIndex, onClose 
           />
         </div>
 
-        {/* Next button */}
         {items.length > 1 && (
           <button
             onClick={goNext}
@@ -105,7 +102,7 @@ export default function EvidenceGalleryModal({ open, items, startIndex, onClose 
         )}
       </div>
 
-      {/* Thumbnail strip */}
+      {/* Thumbnails */}
       {items.length > 1 && (
         <div className="relative z-10 bg-black/40 px-6 py-3">
           <div className="flex items-center justify-center gap-2 overflow-x-auto">
@@ -113,17 +110,13 @@ export default function EvidenceGalleryModal({ open, items, startIndex, onClose 
               <button
                 key={item.id}
                 onClick={() => { setImgLoaded(false); setIndex(i) }}
-                className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 transition-all shrink-0 ${
+                className={`relative w-16 h-16 rounded overflow-hidden border-2 transition-all shrink-0 ${
                   i === index
-                    ? 'border-brand-teal-accent ring-2 ring-brand-teal-accent/30 scale-105'
+                    ? 'border-primary-main ring-2 ring-primary-main/30 scale-105'
                     : 'border-transparent opacity-60 hover:opacity-100'
                 }`}
               >
-                <img
-                  src={item.evidence_url}
-                  alt={item.concept}
-                  className="w-full h-full object-cover"
-                />
+                <img src={item.evidence_url} alt={item.concept} className="w-full h-full object-cover" />
               </button>
             ))}
           </div>

@@ -14,22 +14,30 @@ export default function MapView() {
 
   return (
     <>
-      <h1 className="page-title">Mapa de viajes</h1>
-      <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>
-        Aquí se mostrará el mapa (Leaflet + OpenStreetMap) con las rutas de cada viaje. Misma vista que en el listado, filtros aplicables.
+      <h1 className="text-2xl font-bold text-neutral-900 mb-2">Mapa de viajes</h1>
+      <p className="text-sm text-neutral-500 mb-6">
+        Visualizacion de rutas con OpenStreetMap. Integracion pendiente.
       </p>
-      {loading && <p>Cargando viajes para el mapa…</p>}
-      {!loading && (
-        <div className="card">
-          <div className="card-body">
-            <p style={{ color: 'var(--text-muted)' }}>
-              {trips.length === 0
-                ? 'No hay viajes para mostrar en el mapa.'
-                : `${trips.length} viaje(s) cargados. Integración con Leaflet pendiente.`}
+      <div className="bg-white rounded-xl shadow-card p-8">
+        {loading ? (
+          <div className="flex items-center justify-center py-8 text-neutral-500">
+            <span className="material-icons animate-spin text-xl mr-2">progress_activity</span>
+            Cargando viajes para el mapa...
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="w-16 h-16 rounded-full bg-neutral-200 flex items-center justify-center mb-4">
+              <span className="material-icons text-3xl text-neutral-500">map</span>
+            </div>
+            <p className="text-neutral-900 font-semibold mb-1">
+              {trips.length === 0 ? 'Sin viajes' : `${trips.length} viaje(s) cargados`}
+            </p>
+            <p className="text-neutral-500 text-sm max-w-sm">
+              La integracion con Leaflet / OpenStreetMap esta pendiente de implementacion.
             </p>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </>
   )
 }

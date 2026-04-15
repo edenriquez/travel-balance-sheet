@@ -7,7 +7,6 @@ export default function Login({ useAuth }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [rememberMe, setRememberMe] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -38,89 +37,79 @@ export default function Login({ useAuth }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-brand-cream font-display text-slate-900 antialiased">
-      {/* Left Side: Visual Banner */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-brand-teal-dark/10">
+    <div className="flex min-h-screen font-sans text-neutral-900 antialiased">
+      {/* Left: Visual */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-neutral-800">
         <div
-          className="absolute inset-0 bg-cover bg-center mix-blend-overlay opacity-80"
+          className="absolute inset-0 bg-cover bg-center opacity-40"
           style={{ backgroundImage: "url('/login-bg.jpg')" }}
         />
-        <div className="absolute inset-0 bg-gradient-to-tr from-brand-teal-dark/90 to-brand-teal-accent/40" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-neutral-900/90 via-neutral-800/70 to-primary-main/30" />
         <div className="relative z-10 flex flex-col justify-between p-16 w-full">
-          <div className="flex items-center gap-3 text-white">
-            <div className="truck-icon-wrapper !bg-white/20 !border-white/10 backdrop-blur-md">
-              <span className="material-symbols-outlined text-white text-2xl -scale-x-100">local_shipping</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary-main/20 backdrop-blur-sm">
+              <span className="material-icons text-primary-light text-2xl" style={{ transform: 'scaleX(-1)' }}>local_shipping</span>
             </div>
-            <div className="flex flex-col leading-[0.9]">
-              <span className="text-xl font-black tracking-tight text-white uppercase">Fleet</span>
-              <span className="text-xl font-black tracking-tight text-white uppercase">Budget</span>
+            <div className="flex flex-col leading-none">
+              <span className="text-lg font-extrabold text-white tracking-tight">Fleet</span>
+              <span className="text-lg font-extrabold text-white tracking-tight">Budget</span>
             </div>
           </div>
           <div className="max-w-md">
-            <h1 className="text-5xl font-black text-white leading-tight mb-6">
+            <h1 className="text-5xl font-bold text-white leading-tight mb-6">
               Control total en cada kilometro.
             </h1>
-            <p className="text-white/80 text-lg font-medium">
-              Simplificando el balance de viajes para el transporte de carga de manera eficiente y segura.
+            <p className="text-white/60 text-lg">
+              Simplificando el balance de viajes para el transporte de carga.
             </p>
           </div>
-          <div className="text-white/60 text-sm">
-            &copy; 2024 LogiConta Mexico. Todos los derechos reservados.
+          <div className="text-white/40 text-sm">
+            &copy; 2024 Fleet Budget. Todos los derechos reservados.
           </div>
         </div>
       </div>
 
-      {/* Right Side: Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 lg:p-24 bg-brand-cream">
-        <div className="w-full max-w-md">
+      {/* Right: Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 lg:p-24 bg-white">
+        <div className="w-full max-w-[400px]">
           {/* Mobile logo */}
           <div className="mb-10 lg:hidden flex items-center gap-3">
-            <div className="truck-icon-wrapper">
-              <span className="material-symbols-outlined text-brand-teal-accent text-2xl -scale-x-100">local_shipping</span>
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary-subtle">
+              <span className="material-icons text-primary-main text-2xl" style={{ transform: 'scaleX(-1)' }}>local_shipping</span>
             </div>
-            <div className="flex flex-col leading-[0.9]">
-              <span className="text-lg font-black tracking-tight text-brand-teal-dark uppercase">Fleet</span>
-              <span className="text-lg font-black tracking-tight text-brand-teal-dark uppercase">Budget</span>
+            <div className="flex flex-col leading-none">
+              <span className="text-lg font-extrabold text-neutral-900 tracking-tight">Fleet</span>
+              <span className="text-lg font-extrabold text-neutral-900 tracking-tight">Budget</span>
             </div>
           </div>
 
           <div className="mb-8">
-            <h2 className="text-3xl font-bold text-slate-900 mb-2">Bienvenido</h2>
-            <p className="text-slate-500">Ingrese sus credenciales para acceder al panel administrativo.</p>
+            <h2 className="text-2xl font-bold text-neutral-900 mb-2">Iniciar sesion</h2>
+            <p className="text-neutral-500 text-sm">Ingresa tus credenciales para acceder al panel.</p>
           </div>
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            {/* Email */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700 ml-1" htmlFor="email">
-                Correo Electronico
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            <div>
+              <label className="block text-sm font-semibold text-neutral-900 mb-1.5" htmlFor="email">
+                Correo electronico
               </label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-brand-teal-accent transition-colors">
-                  <span className="material-symbols-outlined text-[20px]">mail</span>
-                </div>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  autoComplete="email"
-                  placeholder="ejemplo@logiconta.mx"
-                  className="block w-full pl-11 pr-4 py-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-teal-accent/20 focus:border-brand-teal-accent outline-none transition-all text-slate-900 placeholder:text-slate-400"
-                />
-              </div>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                placeholder="ejemplo@empresa.mx"
+                className="w-full px-4 py-3 bg-white border border-neutral-300 rounded text-sm text-neutral-900 placeholder:text-neutral-500 focus:outline-none focus:border-primary-main focus:ring-2 focus:ring-primary-main/20 transition-all"
+              />
             </div>
 
-            {/* Password */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700 ml-1" htmlFor="password">
+            <div>
+              <label className="block text-sm font-semibold text-neutral-900 mb-1.5" htmlFor="password">
                 Contrasena
               </label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-brand-teal-accent transition-colors">
-                  <span className="material-symbols-outlined text-[20px]">lock</span>
-                </div>
+              <div className="relative">
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
@@ -129,72 +118,39 @@ export default function Login({ useAuth }) {
                   required
                   autoComplete="current-password"
                   placeholder="••••••••"
-                  className="block w-full pl-11 pr-12 py-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-teal-accent/20 focus:border-brand-teal-accent outline-none transition-all text-slate-900 placeholder:text-slate-400"
+                  className="w-full px-4 py-3 pr-12 bg-white border border-neutral-300 rounded text-sm text-neutral-900 placeholder:text-neutral-500 focus:outline-none focus:border-primary-main focus:ring-2 focus:ring-primary-main/20 transition-all"
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-neutral-500 hover:text-neutral-700"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  <span className="material-symbols-outlined text-[20px]">
+                  <span className="material-icons text-[20px]">
                     {showPassword ? 'visibility_off' : 'visibility'}
                   </span>
                 </button>
               </div>
             </div>
 
-            {/* Remember me + Forgot password */}
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <div className="relative flex items-center justify-center">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="peer appearance-none size-5 border border-slate-300 rounded bg-white checked:bg-brand-teal-accent checked:border-brand-teal-accent transition-all"
-                  />
-                  <span className="material-symbols-outlined absolute text-white text-[16px] opacity-0 peer-checked:opacity-100 pointer-events-none">
-                    check
-                  </span>
-                </div>
-                <span className="text-sm text-slate-600 group-hover:text-slate-900 transition-colors">
-                  Recordarme
-                </span>
-              </label>
-              <a className="text-sm font-semibold text-brand-teal-accent hover:text-brand-teal-accent/80 transition-colors" href="#">
-                Olvido su contrasena?
-              </a>
-            </div>
-
-            {/* Error message */}
             {error && (
-              <p className="text-red-600 text-sm">{error}</p>
+              <div className="p-3 bg-error-light text-error-main rounded text-sm font-medium">
+                {error}
+              </div>
             )}
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-brand-teal-accent hover:bg-brand-teal-accent/90 text-white font-bold rounded-xl shadow-lg shadow-brand-teal-accent/20 transition-all active:scale-[0.98] disabled:opacity-70"
+              className="w-full py-3 bg-primary-main text-white font-bold rounded shadow-primary hover:bg-primary-dark transition-all disabled:opacity-60"
             >
               {loading ? 'Entrando...' : 'Entrar'}
             </button>
           </form>
 
-          <div className="mt-8 pt-8 border-t border-slate-100 text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-full text-xs font-medium text-slate-500">
-              <span className="material-symbols-outlined text-[16px]">verified_user</span>
+          <div className="mt-8 pt-6 border-t border-neutral-300 text-center">
+            <span className="text-xs text-neutral-500">
               Acceso exclusivo para personal administrativo
-            </div>
-          </div>
-
-          <div className="mt-12 flex justify-center gap-6">
-            <a className="text-xs text-slate-400 hover:text-slate-600 transition-colors" href="#">
-              Aviso de Privacidad
-            </a>
-            <a className="text-xs text-slate-400 hover:text-slate-600 transition-colors" href="#">
-              Soporte Tecnico
-            </a>
+            </span>
           </div>
         </div>
       </div>

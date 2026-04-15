@@ -2,15 +2,15 @@ import { useState, useEffect } from 'react'
 import { api } from '../api'
 
 const ROLE_STYLES = {
-  admin: { label: 'Admin', bg: 'bg-purple-100', text: 'text-purple-700', ring: 'ring-purple-700/10' },
-  accountant: { label: 'Contador', bg: 'bg-blue-100', text: 'text-blue-700', ring: 'ring-blue-700/10' },
-  driver: { label: 'Chofer', bg: 'bg-emerald-100', text: 'text-emerald-700', ring: 'ring-emerald-700/10' },
+  admin: { label: 'Admin', bg: 'bg-primary-subtle', text: 'text-primary-main' },
+  accountant: { label: 'Contador', bg: 'bg-info-light', text: 'text-info-main' },
+  driver: { label: 'Chofer', bg: 'bg-warning-light', text: 'text-warning-dark' },
 }
 
 function roleBadge(role) {
   const s = ROLE_STYLES[role] || ROLE_STYLES.accountant
   return (
-    <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${s.bg} ${s.text} ${s.ring}`}>
+    <span className={`inline-flex items-center rounded px-2 py-1 text-[11px] font-bold ${s.bg} ${s.text}`}>
       {s.label}
     </span>
   )
@@ -61,41 +61,44 @@ export default function Members() {
   return (
     <>
       {/* Header */}
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900">Gestion de Usuarios y Roles</h1>
-          <p className="mt-1 text-slate-500">Administra los accesos, permisos y perfiles del personal administrativo y operativo.</p>
+          <h1 className="text-2xl font-bold text-neutral-900">Equipo</h1>
+          <p className="mt-1 text-sm text-neutral-500">Administra los accesos y permisos del personal.</p>
         </div>
         <button
           onClick={() => setModalOpen(true)}
-          className="inline-flex items-center gap-2 rounded-lg bg-brand-teal-accent px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-brand-teal-accent/25 transition-all hover:bg-brand-teal-accent/90"
+          className="btn btn-primary flex items-center gap-2"
         >
-          <span className="material-symbols-outlined">person_add</span>
+          <span className="material-icons text-lg">person_add</span>
           Nuevo Miembro
         </button>
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="bg-white rounded-xl shadow-card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left text-sm">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Usuario</th>
-                <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Rol</th>
-                <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Estado</th>
-                <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500 text-right">Acciones</th>
+              <tr className="bg-neutral-200">
+                <th className="px-6 py-3.5 text-[11px] font-bold text-neutral-600 uppercase tracking-wider">Usuario</th>
+                <th className="px-6 py-3.5 text-[11px] font-bold text-neutral-600 uppercase tracking-wider">Rol</th>
+                <th className="px-6 py-3.5 text-[11px] font-bold text-neutral-600 uppercase tracking-wider">Estado</th>
+                <th className="px-6 py-3.5 text-[11px] font-bold text-neutral-600 uppercase tracking-wider text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200">
+            <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={4} className="px-6 py-8 text-center text-slate-400 text-sm">Cargando...</td>
+                  <td colSpan={4} className="px-6 py-12 text-center text-neutral-500 text-sm">
+                    <span className="material-icons animate-spin text-xl mr-2 align-middle">progress_activity</span>
+                    Cargando...
+                  </td>
                 </tr>
               )}
               {!loading && members.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-6 py-8 text-center text-slate-400 text-sm">
+                  <td colSpan={4} className="px-6 py-12 text-center text-neutral-500 text-sm">
                     Aun no hay miembros. Usa el boton de arriba para invitar.
                   </td>
                 </tr>
@@ -104,38 +107,39 @@ export default function Members() {
                 const email = m.email ?? m.user?.email ?? ''
                 const name = m.name ?? email.split('@')[0]
                 return (
-                  <tr key={m.id} className="hover:bg-slate-50/50 transition-colors">
+                  <tr key={m.id} className="border-b border-neutral-200/60 hover:bg-neutral-200/50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 text-sm font-bold shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-neutral-200 flex items-center justify-center text-neutral-600 text-sm font-bold shrink-0">
                           {getInitials(name)}
                         </div>
                         <div>
-                          <div className="text-sm font-medium text-slate-900">{name}</div>
-                          <div className="text-xs text-slate-500">{email}</div>
+                          <div className="text-sm font-medium text-neutral-900">{name}</div>
+                          <div className="text-xs text-neutral-500">{email}</div>
                         </div>
                       </div>
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap">{roleBadge(m.role)}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {roleBadge(m.role)}
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${m.has_password ? 'bg-success-main' : 'bg-warning-main'}`} />
+                        <span className="text-sm text-neutral-600">{statusText(m)}</span>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`text-sm ${m.has_password ? 'text-emerald-600' : 'text-amber-600'}`}>
-                        {statusText(m)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
                       <button
                         onClick={() => setEditTarget(m)}
-                        className="text-brand-teal-accent hover:text-brand-teal-accent/80 mr-3"
+                        className="w-8 h-8 inline-flex items-center justify-center rounded text-neutral-400 hover:bg-neutral-200 hover:text-neutral-700 transition-all mr-1"
+                        title="Editar"
                       >
-                        Editar
+                        <span className="material-icons text-lg">edit</span>
                       </button>
                       <button
                         onClick={() => setDeleteTarget(m)}
-                        className="text-red-600 hover:text-red-500"
+                        className="w-8 h-8 inline-flex items-center justify-center rounded text-neutral-400 hover:bg-error-subtle hover:text-error-main transition-all"
+                        title="Eliminar"
                       >
-                        Eliminar
+                        <span className="material-icons text-lg">delete</span>
                       </button>
                     </td>
                   </tr>
@@ -145,42 +149,20 @@ export default function Members() {
           </table>
         </div>
         {!loading && members.length > 0 && (
-          <div className="flex items-center justify-between border-t border-slate-200 bg-white px-6 py-4">
-            <div className="text-sm text-slate-500">Mostrando {members.length} usuario{members.length !== 1 ? 's' : ''}</div>
+          <div className="px-6 py-3 border-t border-neutral-200/60">
+            <span className="text-xs text-neutral-500">{members.length} usuario{members.length !== 1 ? 's' : ''}</span>
           </div>
         )}
       </div>
 
-      {/* Add Member Modal */}
-      {modalOpen && (
-        <MemberFormModal
-          onClose={() => setModalOpen(false)}
-          onSaved={handleCreated}
-        />
-      )}
-
-      {/* Edit Member Modal */}
-      {editTarget && (
-        <MemberFormModal
-          member={editTarget}
-          onClose={() => setEditTarget(null)}
-          onSaved={handleUpdated}
-        />
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {deleteTarget && (
-        <DeleteMemberModal
-          member={deleteTarget}
-          onClose={() => setDeleteTarget(null)}
-          onDeleted={handleDeleted}
-        />
-      )}
+      {/* Modals */}
+      {modalOpen && <MemberFormModal onClose={() => setModalOpen(false)} onSaved={handleCreated} />}
+      {editTarget && <MemberFormModal member={editTarget} onClose={() => setEditTarget(null)} onSaved={handleUpdated} />}
+      {deleteTarget && <DeleteMemberModal member={deleteTarget} onClose={() => setDeleteTarget(null)} onDeleted={handleDeleted} />}
     </>
   )
 }
 
-/** Shared modal for both Add and Edit */
 function MemberFormModal({ member, onClose, onSaved }) {
   const isEdit = !!member
   const [name, setName] = useState(member?.name ?? '')
@@ -236,118 +218,108 @@ function MemberFormModal({ member, onClose, onSaved }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/60 backdrop-blur-sm px-4 py-6">
-      <div className="w-full max-w-lg overflow-hidden rounded-xl bg-white shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-          <h3 className="text-xl font-bold text-slate-900">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-neutral-900/60 backdrop-blur-sm px-4 py-6">
+      <div className="w-full max-w-lg bg-white rounded-xl shadow-dropdown overflow-hidden">
+        <div className="flex items-center justify-between border-b border-neutral-300/50 px-6 py-4">
+          <h3 className="text-lg font-bold text-neutral-900">
             {isEdit ? 'Editar Miembro' : 'Agregar Nuevo Miembro'}
           </h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
-            <span className="material-symbols-outlined">close</span>
+          <button onClick={onClose} className="text-neutral-400 hover:text-neutral-600 transition-colors">
+            <span className="material-icons">close</span>
           </button>
         </div>
 
-        {/* Body */}
         <div className="px-6 py-6">
           <form id="member-form" className="space-y-4" onSubmit={handleSubmit}>
-            {/* Name */}
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">Nombre Completo</label>
+              <label className="block text-sm font-semibold text-neutral-900 mb-1.5">Nombre Completo</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-lg border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-brand-teal-accent focus:ring-brand-teal-accent"
+                className="w-full rounded border border-neutral-300 bg-white px-4 py-2.5 text-sm focus:border-primary-main focus:ring-2 focus:ring-primary-main/20"
                 placeholder="ej. Maria Garcia"
               />
             </div>
 
-            {/* Email */}
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">Correo Electronico</label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                  <span className="material-symbols-outlined text-sm">mail</span>
-                </span>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required={!isEdit}
-                  disabled={isEdit}
-                  className={`w-full rounded-lg border-slate-200 bg-white pl-10 pr-4 py-2.5 text-sm focus:border-brand-teal-accent focus:ring-brand-teal-accent ${isEdit ? 'bg-slate-50 text-slate-500 cursor-not-allowed' : ''}`}
-                  placeholder="usuario@logiconta.mx"
-                />
+              <label className="block text-sm font-semibold text-neutral-900 mb-1.5">Correo Electronico</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required={!isEdit}
+                disabled={isEdit}
+                className={`w-full rounded border border-neutral-300 bg-white px-4 py-2.5 text-sm focus:border-primary-main focus:ring-2 focus:ring-primary-main/20 ${isEdit ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed' : ''}`}
+                placeholder="usuario@empresa.mx"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-neutral-900 mb-1.5">Rol</label>
+              <div className="flex gap-3">
+                {[
+                  { value: 'accountant', label: 'Contador', icon: 'calculate' },
+                  { value: 'driver', label: 'Chofer', icon: 'local_shipping' },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setRole(opt.value)}
+                    className={`flex-1 flex items-center gap-2 px-4 py-3 rounded border text-sm font-medium transition-all ${
+                      role === opt.value
+                        ? 'border-primary-main bg-primary-subtle text-primary-main'
+                        : 'border-neutral-300 text-neutral-600 hover:bg-neutral-200'
+                    }`}
+                  >
+                    <span className="material-icons text-lg">{opt.icon}</span>
+                    {opt.label}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Role */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">Rol</label>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                required
-                className="w-full rounded-lg border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-brand-teal-accent focus:ring-brand-teal-accent"
-              >
-                <option value="">Seleccionar...</option>
-                <option value="accountant">Contador</option>
-                <option value="driver">Operador/Chofer</option>
-              </select>
-            </div>
-
-            {/* WhatsApp - shown only for drivers */}
             {isDriver && (
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">
-                  Numero de WhatsApp <span className="text-red-500">*</span>
+                <label className="block text-sm font-semibold text-neutral-900 mb-1.5">
+                  Numero de WhatsApp <span className="text-error-main">*</span>
                 </label>
                 <div className="flex">
-                  <span className="inline-flex items-center rounded-l-lg border border-r-0 border-slate-200 bg-slate-50 px-3 text-sm text-slate-500">
+                  <span className="inline-flex items-center rounded-l border border-r-0 border-neutral-300 bg-neutral-200 px-3 text-sm text-neutral-600">
                     +52
                   </span>
                   <input
                     type="tel"
                     value={whatsapp}
                     onChange={(e) => setWhatsapp(e.target.value)}
-                    className="block w-full flex-1 rounded-none rounded-r-lg border-slate-200 bg-white px-4 py-2.5 text-sm focus:border-brand-teal-accent focus:ring-brand-teal-accent"
+                    className="block w-full flex-1 rounded-none rounded-r border border-neutral-300 bg-white px-4 py-2.5 text-sm focus:border-primary-main focus:ring-2 focus:ring-primary-main/20"
                     placeholder="55 1234 5678"
                   />
                 </div>
-                <p className="mt-1 text-xs text-slate-500 flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[14px]">info</span>
-                  Requerido para operadores de ruta.
+                <p className="mt-1.5 text-xs text-neutral-500 flex items-center gap-1">
+                  <span className="material-icons text-[14px]">info</span>
+                  Requerido para vincular con el bot de WhatsApp.
                 </p>
               </div>
             )}
 
             {error && (
-              <p className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">{error}</p>
+              <div className="p-3 bg-error-light text-error-main rounded text-sm font-medium">{error}</div>
             )}
           </form>
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4">
-          <button
-            onClick={onClose}
-            disabled={sending}
-            className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200"
-          >
+        <div className="flex items-center justify-end gap-3 border-t border-neutral-300/50 bg-neutral-100 px-6 py-4">
+          <button onClick={onClose} disabled={sending} className="btn btn-ghost">
             Cancelar
           </button>
           <button
             type="submit"
             form="member-form"
             disabled={sending || (!isEdit && (!email.trim() || !role))}
-            className="rounded-lg bg-brand-teal-accent px-6 py-2 text-sm font-bold text-white shadow-lg shadow-brand-teal-accent/20 hover:bg-brand-teal-accent/90 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {sending
-              ? 'Guardando...'
-              : isEdit
-                ? 'Guardar Cambios'
-                : 'Guardar Miembro'}
+            {sending ? 'Guardando...' : isEdit ? 'Guardar Cambios' : 'Guardar Miembro'}
           </button>
         </div>
       </div>
@@ -365,9 +337,7 @@ function DeleteMemberModal({ member, onClose, onDeleted }) {
     setDeleting(true)
     setError('')
     try {
-      await api(`/api/companies/current/members/${member.id}`, {
-        method: 'DELETE',
-      })
+      await api(`/api/companies/current/members/${member.id}`, { method: 'DELETE' })
       onDeleted(member.id)
     } catch (err) {
       setError(err.message)
@@ -377,70 +347,60 @@ function DeleteMemberModal({ member, onClose, onDeleted }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/60 backdrop-blur-sm px-4 py-6">
-      <div className="w-full max-w-md overflow-hidden rounded-xl bg-white shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-neutral-900/60 backdrop-blur-sm px-4 py-6">
+      <div className="w-full max-w-md bg-white rounded-xl shadow-dropdown overflow-hidden">
+        <div className="flex items-center justify-between border-b border-neutral-300/50 px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
-              <span className="material-symbols-outlined text-red-600">warning</span>
+            <div className="w-10 h-10 rounded-full bg-error-light flex items-center justify-center">
+              <span className="material-icons text-error-main">warning</span>
             </div>
-            <h3 className="text-xl font-bold text-slate-900">Eliminar Miembro</h3>
+            <h3 className="text-lg font-bold text-neutral-900">Eliminar Miembro</h3>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
-            <span className="material-symbols-outlined">close</span>
+          <button onClick={onClose} className="text-neutral-400 hover:text-neutral-600 transition-colors">
+            <span className="material-icons">close</span>
           </button>
         </div>
 
-        {/* Body */}
         <div className="px-6 py-6">
-          <p className="text-sm text-slate-600">
-            Estas a punto de eliminar al miembro <span className="font-bold text-slate-900">{name}</span> ({email}).
+          <p className="text-sm text-neutral-600">
+            Estas a punto de eliminar al miembro <span className="font-bold text-neutral-900">{name}</span>.
           </p>
-          <p className="text-sm text-slate-600 mt-2">
-            Esta accion no se puede deshacer. El usuario perdera acceso al sistema inmediatamente.
+          <p className="text-sm text-neutral-600 mt-2">
+            Esta accion no se puede deshacer.
           </p>
 
-          {/* Member summary card */}
-          <div className="mt-4 flex items-center gap-3 rounded-lg bg-slate-50 border border-slate-100 p-4">
-            <div className="h-10 w-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 text-sm font-bold shrink-0">
+          <div className="mt-4 flex items-center gap-3 rounded bg-neutral-100 border border-neutral-300/50 p-4">
+            <div className="w-10 h-10 rounded-full bg-neutral-200 flex items-center justify-center text-neutral-600 text-sm font-bold shrink-0">
               {getInitials(name)}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium text-slate-900 truncate">{name}</div>
-              <div className="text-xs text-slate-500 truncate">{email}</div>
+              <div className="text-sm font-medium text-neutral-900 truncate">{name}</div>
+              <div className="text-xs text-neutral-500 truncate">{email}</div>
             </div>
             {roleBadge(member.role)}
           </div>
 
           {error && (
-            <p className="mt-4 text-sm text-red-600 bg-red-50 p-3 rounded-lg">{error}</p>
+            <div className="mt-4 p-3 bg-error-light text-error-main rounded text-sm font-medium">{error}</div>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4">
-          <button
-            onClick={onClose}
-            disabled={deleting}
-            className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200"
-          >
-            Cancelar
-          </button>
+        <div className="flex items-center justify-end gap-3 border-t border-neutral-300/50 bg-neutral-100 px-6 py-4">
+          <button onClick={onClose} disabled={deleting} className="btn btn-ghost">Cancelar</button>
           <button
             onClick={handleConfirm}
             disabled={deleting}
-            className="rounded-lg bg-red-600 px-6 py-2 text-sm font-bold text-white shadow-lg shadow-red-600/20 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="btn btn-danger flex items-center gap-2 disabled:opacity-50"
           >
             {deleting ? (
               <>
-                <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span>
+                <span className="material-icons animate-spin text-lg">progress_activity</span>
                 Eliminando...
               </>
             ) : (
               <>
-                <span className="material-symbols-outlined text-lg">delete</span>
-                Eliminar Miembro
+                <span className="material-icons text-lg">delete</span>
+                Eliminar
               </>
             )}
           </button>
