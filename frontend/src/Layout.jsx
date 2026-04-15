@@ -1,12 +1,11 @@
 import { useState } from 'react'
-import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import NotificationBell from './components/NotificationBell'
 
 export default function Layout({ useAuth }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const location = useLocation()
   const [collapsed, setCollapsed] = useState(false)
-  const [notifOpen, setNotifOpen] = useState(false)
 
   const handleLogout = () => {
     logout()
@@ -119,29 +118,7 @@ export default function Layout({ useAuth }) {
       <div className={`${mainML} min-h-screen bg-neutral-100 transition-all duration-200`}>
         {/* Top bar */}
         <header className="sticky top-0 z-40 h-16 bg-white/80 backdrop-blur-md border-b border-neutral-300/50 flex items-center justify-end gap-3 px-8">
-          {/* Bell notification */}
-          <div className="relative">
-            <button
-              onClick={() => setNotifOpen(!notifOpen)}
-              className="relative p-2 rounded-full text-neutral-600 hover:bg-neutral-200 transition-colors"
-            >
-              <span className="material-icons text-[22px]">notifications</span>
-            </button>
-            {notifOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
-                <div className="absolute right-0 top-12 w-[360px] bg-white rounded-xl shadow-dropdown border border-neutral-300/50 z-50 overflow-hidden">
-                  <div className="px-5 py-4 border-b border-neutral-300/50">
-                    <h3 className="text-base font-bold text-neutral-900">Notificaciones</h3>
-                    <p className="text-xs text-neutral-500 mt-0.5">Gastos pendientes de revision</p>
-                  </div>
-                  <div className="px-5 py-6 text-center text-neutral-500 text-sm">
-                    Sin pendientes por ahora
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
+          <NotificationBell />
 
           {/* User avatar */}
           <div className="flex items-center gap-3 pl-3 border-l border-neutral-300/50">

@@ -8,6 +8,10 @@ from src.exceptions import AppError
 from fastapi import status
 
 from src.models import Driver, Movement, Trip
+from src.notifications.service import (
+    acknowledge_all_for_movement,
+    ensure_pending_evidence_notifications_for_movement,
+)
 from src.whatsapp import send_rejection_notice, send_approval_notice
 
 
@@ -192,6 +196,13 @@ async def add_movement(
 
     await session.flush()
 
+    await ensure_pending_evidence_notifications_for_movement(
+        session,
+        company_id=company_id,
+        trip_id=trip.id,
+        movement=movement,
+    )
+
     return {
         "id": str(movement.id),
         "type": movement.type,
@@ -239,6 +250,10 @@ async def approve_movement(
     movement.evidence_status = "approved"
 
     await session.flush()
+
+    await acknowledge_all_for_movement(
+        session, company_id=company_id, movement_id=movement_id
+    )
 
     driver = await _get_driver_for_trip(session, trip)
     if driver and driver.whatsapp_phone:
@@ -292,6 +307,10 @@ async def reject_movement(
     movement.rejected_at = datetime.now(timezone.utc)
 
     await session.flush()
+
+    await acknowledge_all_for_movement(
+        session, company_id=company_id, movement_id=movement_id
+    )
 
     if notify_whatsapp:
         driver = await _get_driver_for_trip(session, trip)

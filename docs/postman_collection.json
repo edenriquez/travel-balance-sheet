@@ -19,6 +19,16 @@
       "key": "trip_id",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "movement_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "notification_id",
+      "value": "",
+      "type": "string"
     }
   ],
   "auth": {
@@ -342,6 +352,137 @@
               "raw": "{{base_url}}/api/trips/{{trip_id}}/movements/REPLACE_WITH_MOVEMENT_ID/reject",
               "host": ["{{base_url}}"],
               "path": ["api", "trips", "{{trip_id}}", "movements", "REPLACE_WITH_MOVEMENT_ID", "reject"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "List Notifications (unacknowledged)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "",
+                  "if (Array.isArray(res) && res.length > 0) {",
+                  "    pm.collectionVariables.set('notification_id', res[0].id);",
+                  "    console.log('notification_id saved:', res[0].id);",
+                  "}",
+                  "",
+                  "pm.test('Notifications listed', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(res).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/notifications?unacknowledged_only=true",
+              "host": ["{{base_url}}"],
+              "path": ["api", "notifications"],
+              "query": [
+                { "key": "unacknowledged_only", "value": "true" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Notifications (all)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Notifications listed', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/notifications",
+              "host": ["{{base_url}}"],
+              "path": ["api", "notifications"]
+            }
+          }
+        },
+        {
+          "name": "Create Notification (pending evidence)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Notification created', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res).to.have.property('created');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trip_id\": \"{{trip_id}}\",\n  \"movement_id\": \"{{movement_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/notifications",
+              "host": ["{{base_url}}"],
+              "path": ["api", "notifications"]
+            }
+          }
+        },
+        {
+          "name": "Acknowledge Notification",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Notification acknowledged', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const res = pm.response.json();",
+                  "    pm.expect(res.acknowledged_at).to.not.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"acknowledged\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/notifications/{{notification_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "notifications", "{{notification_id}}"]
             }
           }
         }

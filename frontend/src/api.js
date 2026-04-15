@@ -61,3 +61,18 @@ export async function rejectMovement(tripId, movementId, { rejection_reason, not
 export async function health() {
   return api('/health')
 }
+
+/** @param {{ unacknowledged_only?: boolean }} [params] */
+export async function getNotifications(params = {}) {
+  const q = new URLSearchParams()
+  if (params.unacknowledged_only) q.set('unacknowledged_only', 'true')
+  const qs = q.toString()
+  return api(`/api/notifications${qs ? `?${qs}` : ''}`)
+}
+
+export async function acknowledgeNotification(notificationId) {
+  return api(`/api/notifications/${notificationId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ acknowledged: true }),
+  })
+}
