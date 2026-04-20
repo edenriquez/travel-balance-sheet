@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { getTrip, getDrivers, approveMovement } from '../api'
+import { getTrip, getDrivers, approveMovement, closeTrip } from '../api'
 import RejectMovementModal from './RejectMovementModal'
 import EvidenceGalleryModal from './EvidenceGalleryModal'
 
@@ -44,6 +44,8 @@ export default function TripDetail() {
   const [rejectTarget, setRejectTarget] = useState(null)
   const [galleryIndex, setGalleryIndex] = useState(null)
   const [approvedFlash, setApprovedFlash] = useState(null)
+  const [confirmClose, setConfirmClose] = useState(false)
+  const [closing, setClosing] = useState(false)
 
   const loadTrip = useCallback(async () => {
     try {
@@ -79,6 +81,19 @@ export default function TripDetail() {
       setTimeout(() => setApprovedFlash(null), 600)
       loadTrip()
     } catch {}
+  }
+
+  async function handleCloseTrip() {
+    setClosing(true)
+    try {
+      await closeTrip(id)
+      await loadTrip()
+      setConfirmClose(false)
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setClosing(false)
+    }
   }
 
   if (loading) {
@@ -152,7 +167,10 @@ export default function TripDetail() {
         </div>
         <div className="flex gap-2">
           {!isClosed && (
-            <button className="btn btn-soft flex items-center gap-2" disabled>
+            <button
+              onClick={() => setConfirmClose(true)}
+              className="btn btn-soft flex items-center gap-2"
+            >
               <span className="material-icons text-lg">check_circle</span>
               Cerrar Viaje
             </button>
@@ -357,6 +375,79 @@ export default function TripDetail() {
         startIndex={galleryIndex ?? 0}
         onClose={() => setGalleryIndex(null)}
       />
+
+      {/* Close trip confirmation */}
+      {confirmClose && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-neutral-900/60 backdrop-blur-sm px-4 py-6">
+          <div className="w-full max-w-md bg-white rounded-xl shadow-dropdown overflow-hidden">
+            <div className="flex items-center justify-between border-b border-neutral-300/50 px-6 py-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary-subtle flex items-center justify-center">
+                  <span className="material-icons text-primary-main">check_circle</span>
+                </div>
+                <h3 className="text-lg font-bold text-neutral-900">Cerrar Viaje</h3>
+              </div>
+              <button onClick={() => setConfirmClose(false)} className="text-neutral-400 hover:text-neutral-600 transition-colors">
+                <span className="material-icons">close</span>
+              </button>
+            </div>
+
+            <div className="px-6 py-6">
+              <p className="text-sm text-neutral-600">
+                Estas a punto de cerrar el viaje <span className="font-bold text-neutral-900">Folio #{folio}</span>.
+              </p>
+              <p className="text-sm text-neutral-600 mt-2">
+                Una vez cerrado, no se podran agregar ni aprobar mas gastos.
+              </p>
+
+              <div className="mt-4 rounded bg-neutral-100 border border-neutral-300/50 p-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-500">Ruta</span>
+                  <span className="font-medium text-neutral-900">{trip.origin_name} → {trip.destination_name}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-500">Gastos</span>
+                  <span className="font-medium text-neutral-900">{formatMoney(totalExpense)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-500">Neto</span>
+                  <span className={`font-bold ${balance >= 0 ? 'text-primary-main' : 'text-error-main'}`}>{formatMoney(balance)}</span>
+                </div>
+              </div>
+
+              {expense.some((m) => (m.evidence_status || 'pending') === 'pending') && (
+                <div className="mt-4 p-3 bg-warning-light text-warning-dark rounded text-sm font-medium flex items-center gap-2">
+                  <span className="material-icons text-lg">warning</span>
+                  Hay gastos pendientes de revision.
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-3 border-t border-neutral-300/50 bg-neutral-100 px-6 py-4">
+              <button onClick={() => setConfirmClose(false)} disabled={closing} className="btn btn-ghost">
+                Cancelar
+              </button>
+              <button
+                onClick={handleCloseTrip}
+                disabled={closing}
+                className="btn btn-primary flex items-center gap-2 disabled:opacity-50"
+              >
+                {closing ? (
+                  <>
+                    <span className="material-icons animate-spin text-lg">progress_activity</span>
+                    Cerrando...
+                  </>
+                ) : (
+                  <>
+                    <span className="material-icons text-lg">check_circle</span>
+                    Confirmar Cierre
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

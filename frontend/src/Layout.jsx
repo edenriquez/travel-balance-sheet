@@ -22,7 +22,7 @@ export default function Layout({ useAuth }) {
     {
       label: 'Administracion',
       items: [
-        { to: '/miembros', icon: 'group', label: 'Equipo', adminOnly: true },
+        { to: '/miembros', icon: 'group', label: 'Equipo', roles: ['admin', 'accountant'] },
       ],
     },
   ]
@@ -55,7 +55,11 @@ export default function Layout({ useAuth }) {
         <nav className="flex-1 overflow-y-auto px-3 py-2">
           {navSections.map((section) => {
             const visibleItems = section.items.filter(
-              (item) => !item.adminOnly || user?.role === 'admin'
+              (item) => {
+                if (item.roles) return item.roles.includes(user?.role)
+                if (item.adminOnly) return user?.role === 'admin'
+                return true
+              }
             )
             if (visibleItems.length === 0) return null
             return (

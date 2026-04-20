@@ -58,6 +58,13 @@ export async function rejectMovement(tripId, movementId, { rejection_reason, not
   })
 }
 
+export async function closeTrip(tripId) {
+  return api(`/api/trips/${tripId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ status: 'closed' }),
+  })
+}
+
 export async function health() {
   return api('/health')
 }
