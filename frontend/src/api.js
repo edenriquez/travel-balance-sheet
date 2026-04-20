@@ -58,10 +58,12 @@ export async function rejectMovement(tripId, movementId, { rejection_reason, not
   })
 }
 
-export async function closeTrip(tripId) {
+export async function closeTrip(tripId, { notes } = {}) {
+  const body = { status: 'closed' }
+  if (notes?.trim()) body.notes = notes.trim()
   return api(`/api/trips/${tripId}`, {
     method: 'PUT',
-    body: JSON.stringify({ status: 'closed' }),
+    body: JSON.stringify(body),
   })
 }
 

@@ -73,6 +73,7 @@ async def create_trip(session: AsyncSession, *, company_id: UUID, data: dict) ->
         "start_date": trip.start_date,
         "end_date": trip.end_date,
         "status": trip.status,
+        "notes": trip.notes,
         "total_income": _to_float(trip.total_income),
         "total_expense": _to_float(trip.total_expense),
     }
@@ -89,6 +90,8 @@ async def update_trip(
         raise AppError("trip not found", status_code=status.HTTP_404_NOT_FOUND)
     if data.get("status") is not None:
         trip.status = data["status"]
+    if data.get("notes") is not None:
+        trip.notes = data["notes"]
     if data.get("total_income") is not None:
         trip.total_income = _to_float(data["total_income"])
     if data.get("total_expense") is not None:
@@ -112,6 +115,7 @@ async def update_trip(
         "start_date": trip.start_date,
         "end_date": trip.end_date,
         "status": trip.status,
+        "notes": trip.notes,
         "total_income": _to_float(trip.total_income),
         "total_expense": _to_float(trip.total_expense),
     }
@@ -156,6 +160,7 @@ async def list_trips(
             "start_date": t.start_date,
             "end_date": t.end_date,
             "status": t.status,
+            "notes": t.notes,
             "total_income": _to_float(t.total_income),
             "total_expense": _to_float(t.total_expense),
         }
@@ -367,6 +372,7 @@ async def get_trip_detail(
         "start_date": trip.start_date,
         "end_date": trip.end_date,
         "status": trip.status,
+        "notes": trip.notes,
         "total_income": _to_float(trip.total_income),
         "total_expense": _to_float(trip.total_expense),
         "movements": [

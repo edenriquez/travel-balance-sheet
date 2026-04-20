@@ -19,6 +19,7 @@ class TripCreate(BaseModel):
 
 class TripUpdate(BaseModel):
     status: str | None = Field(None, description="Estado del viaje")
+    notes: str | None = Field(None, max_length=2048, description="Notas al cerrar el viaje")
     total_income: float | None = Field(None, description="Ingresos totales")
     total_expense: float | None = Field(None, description="Gastos totales")
 
@@ -39,6 +40,7 @@ class TripResponse(BaseModel):
     start_date: datetime
     end_date: datetime | None = None
     status: str
+    notes: str | None = None
     total_income: float
     total_expense: float
 

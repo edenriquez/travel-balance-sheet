@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import useEscapeKey from '../hooks/useEscapeKey'
 
 function formatMoney(n) {
   return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(Number(n))
@@ -7,6 +8,8 @@ function formatMoney(n) {
 export default function EvidenceGalleryModal({ open, items, startIndex, onClose }) {
   const [index, setIndex] = useState(startIndex ?? 0)
   const [imgLoaded, setImgLoaded] = useState(false)
+
+  useEscapeKey(onClose, open)
 
   useEffect(() => {
     if (open) {

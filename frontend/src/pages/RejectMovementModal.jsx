@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { rejectMovement } from '../api'
+import useEscapeKey from '../hooks/useEscapeKey'
 
 function formatMoney(n) {
   return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(Number(n))
@@ -32,6 +33,8 @@ export default function RejectMovementModal({ open, movement, tripId, onClose, o
   const [notifyWhatsApp, setNotifyWhatsApp] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  useEscapeKey(onClose, open)
 
   if (!open || !movement) return null
 

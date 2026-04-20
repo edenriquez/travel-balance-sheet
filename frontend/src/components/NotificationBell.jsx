@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getNotifications } from '../api'
+import useEscapeKey from '../hooks/useEscapeKey'
 
 const POLL_MS = 45_000
 
@@ -10,6 +11,8 @@ export default function NotificationBell() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+
+  useEscapeKey(() => setOpen(false), open)
 
   const load = useCallback(async () => {
     setError(null)

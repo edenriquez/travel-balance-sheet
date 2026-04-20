@@ -40,6 +40,7 @@ class Trip(Base):
     start_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     end_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="in_progress")  # in_progress | closed
+    notes: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     total_income: Mapped[Decimal] = mapped_column(Numeric(14, 2), default=0, nullable=False)
     total_expense: Mapped[Decimal] = mapped_column(Numeric(14, 2), default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)

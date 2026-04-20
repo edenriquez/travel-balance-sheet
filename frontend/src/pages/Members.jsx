@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { api } from '../api'
 import { getUser } from '../auth'
+import useEscapeKey from '../hooks/useEscapeKey'
 
 // Role-based creation rules:
 // admin -> can create accountants and drivers
@@ -253,6 +254,8 @@ export default function Members() {
 }
 
 function MemberFormModal({ member, currentRole, onClose, onSaved }) {
+  useEscapeKey(onClose)
+
   const isEdit = !!member
   const allowedRoles = CREATABLE_ROLES[currentRole] || []
   const memberEmail = member?.email ?? member?.user?.email ?? ''
@@ -428,6 +431,8 @@ function MemberFormModal({ member, currentRole, onClose, onSaved }) {
 }
 
 function DeleteMemberModal({ member, onClose, onDeleted }) {
+  useEscapeKey(onClose)
+
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState('')
   const email = member.email ?? member.user?.email ?? ''

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getTrips, getDrivers } from '../api'
 import NewTripModal from './NewTrip'
@@ -18,18 +18,162 @@ function formatMoney(n) {
 }
 
 const STATUS_CONFIG = {
-  in_progress: { label: 'En curso', color: 'bg-info-main' },
-  closed: { label: 'Completado', color: 'bg-success-main' },
-  pending_review: { label: 'Pendiente', color: 'bg-warning-main' },
-  with_rejections: { label: 'Con rechazos', color: 'bg-error-main' },
+  in_progress: { label: 'En curso', color: 'bg-info-main', icon: 'local_shipping' },
+  closed: { label: 'Completado', color: 'bg-success-main', icon: 'check_circle' },
+  pending_review: { label: 'Pendiente', color: 'bg-warning-main', icon: 'schedule' },
+  with_rejections: { label: 'Con rechazos', color: 'bg-error-main', icon: 'error' },
 }
 
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'Todos' },
+  { value: 'in_progress', label: 'En curso' },
+  { value: 'closed', label: 'Completado' },
+  { value: 'pending_review', label: 'Pendiente' },
+  { value: 'with_rejections', label: 'Con rechazos' },
+]
+
 const PERIOD_OPTIONS = [
-  { value: 'active', label: 'Viajes activos' },
+  { value: '', label: 'Todo el tiempo' },
   { value: 'week', label: 'Esta semana' },
   { value: 'month', label: 'Este mes' },
   { value: 'custom', label: 'Rango personalizado' },
 ]
+
+const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+const DAY_LABELS = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa', 'Do']
+
+function DatePickerField({ label, value, onChange }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  const today = new Date()
+
+  const selected = value ? new Date(value + 'T00:00:00') : null
+  const [viewYear, setViewYear] = useState(selected?.getFullYear() ?? today.getFullYear())
+  const [viewMonth, setViewMonth] = useState(selected?.getMonth() ?? today.getMonth())
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return
+    function handle(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', handle)
+    return () => document.removeEventListener('mousedown', handle)
+  }, [open])
+
+  function prevMonth() {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear(viewYear - 1) }
+    else setViewMonth(viewMonth - 1)
+  }
+  function nextMonth() {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear(viewYear + 1) }
+    else setViewMonth(viewMonth + 1)
+  }
+
+  // Build calendar grid (Monday-start)
+  const firstDay = new Date(viewYear, viewMonth, 1)
+  const startDow = (firstDay.getDay() + 6) % 7 // 0=Mon
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate()
+  const cells = []
+  for (let i = 0; i < startDow; i++) cells.push(null)
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d)
+
+  function pick(day) {
+    const m = String(viewMonth + 1).padStart(2, '0')
+    const d = String(day).padStart(2, '0')
+    onChange(`${viewYear}-${m}-${d}`)
+    setOpen(false)
+  }
+
+  const displayValue = selected
+    ? selected.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
+    : ''
+
+  return (
+    <div className="relative" ref={ref}>
+      <label className="block text-xs text-neutral-500 mb-1">{label}</label>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={`w-full flex items-center gap-2 bg-neutral-200 rounded px-3 py-2 text-sm text-left transition-all ${
+          open ? 'ring-2 ring-primary-main/20 bg-white' : 'hover:bg-neutral-300'
+        }`}
+      >
+        <span className="material-icons text-neutral-500 text-base">calendar_today</span>
+        <span className={displayValue ? 'text-neutral-900' : 'text-neutral-500'}>
+          {displayValue || 'Seleccionar'}
+        </span>
+      </button>
+
+      {open && (
+        <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-white rounded-xl shadow-dropdown border border-neutral-200 p-3 animate-in fade-in slide-in-from-top-1">
+          {/* Month/year nav */}
+          <div className="flex items-center justify-between mb-2">
+            <button
+              type="button"
+              onClick={prevMonth}
+              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-neutral-200 text-neutral-600 transition-colors"
+            >
+              <span className="material-icons text-base">chevron_left</span>
+            </button>
+            <span className="text-sm font-semibold text-neutral-900">
+              {MONTH_NAMES[viewMonth]} {viewYear}
+            </span>
+            <button
+              type="button"
+              onClick={nextMonth}
+              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-neutral-200 text-neutral-600 transition-colors"
+            >
+              <span className="material-icons text-base">chevron_right</span>
+            </button>
+          </div>
+
+          {/* Day labels */}
+          <div className="grid grid-cols-7 mb-1">
+            {DAY_LABELS.map((d) => (
+              <div key={d} className="text-center text-[10px] font-bold text-neutral-400 py-1">{d}</div>
+            ))}
+          </div>
+
+          {/* Day grid */}
+          <div className="grid grid-cols-7">
+            {cells.map((day, i) => {
+              if (day === null) return <div key={`e-${i}`} />
+              const iso = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+              const isSelected = value === iso
+              const isToday = day === today.getDate() && viewMonth === today.getMonth() && viewYear === today.getFullYear()
+              return (
+                <button
+                  key={day}
+                  type="button"
+                  onClick={() => pick(day)}
+                  className={`w-full aspect-square flex items-center justify-center rounded-full text-xs font-medium transition-all ${
+                    isSelected
+                      ? 'bg-primary-main text-white shadow-sm'
+                      : isToday
+                        ? 'bg-primary-subtle text-primary-main font-bold'
+                        : 'text-neutral-700 hover:bg-neutral-200'
+                  }`}
+                >
+                  {day}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Today shortcut */}
+          <div className="mt-2 pt-2 border-t border-neutral-200">
+            <button
+              type="button"
+              onClick={() => { setViewYear(today.getFullYear()); setViewMonth(today.getMonth()); pick(today.getDate()) }}
+              className="w-full text-xs text-primary-main font-semibold hover:text-primary-dark transition-colors py-1"
+            >
+              Hoy
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -41,38 +185,40 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
   // Filter state
-  const [period, setPeriod] = useState('active')
+  const [statusFilter, setStatusFilter] = useState('in_progress')
+  const [period, setPeriod] = useState('')
   const [customStart, setCustomStart] = useState('')
   const [customEnd, setCustomEnd] = useState('')
   const [selectedDrivers, setSelectedDrivers] = useState([])
-  const [selectedStatuses, setSelectedStatuses] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
+
+  const showPeriod = true
 
   // Build API filters
   const apiFilters = useMemo(() => {
     const f = {}
-    if (period === 'active') {
-      f.status = 'in_progress'
-    } else if (period === 'week') {
-      const now = new Date()
-      const start = new Date(now)
-      start.setDate(now.getDate() - now.getDay())
-      f.start_date = start.toISOString().split('T')[0]
-    } else if (period === 'month') {
-      const now = new Date()
-      f.start_date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
-    } else if (period === 'custom') {
-      if (customStart) f.start_date = customStart
-      if (customEnd) f.end_date = customEnd
+    if (statusFilter !== 'all') {
+      f.status = statusFilter
     }
-    if (selectedStatuses.length === 1) {
-      f.status = selectedStatuses[0]
+    if (showPeriod) {
+      if (period === 'week') {
+        const now = new Date()
+        const start = new Date(now)
+        start.setDate(now.getDate() - now.getDay())
+        f.start_date = start.toISOString().split('T')[0]
+      } else if (period === 'month') {
+        const now = new Date()
+        f.start_date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+      } else if (period === 'custom') {
+        if (customStart) f.start_date = customStart
+        if (customEnd) f.end_date = customEnd
+      }
     }
     if (selectedDrivers.length === 1) {
       f.driver_id = selectedDrivers[0]
     }
     return f
-  }, [period, customStart, customEnd, selectedStatuses, selectedDrivers])
+  }, [statusFilter, showPeriod, period, customStart, customEnd, selectedDrivers])
 
   const loadData = useCallback(() => {
     let cancelled = false
@@ -106,14 +252,11 @@ export default function Dashboard() {
     return loadData()
   }, [loadData])
 
-  // Client-side filtering for multi-select
+  // Client-side filtering for multi-select drivers and search
   const filteredTrips = useMemo(() => {
     let result = trips
     if (selectedDrivers.length > 1) {
       result = result.filter((t) => selectedDrivers.includes(t.driver_id))
-    }
-    if (selectedStatuses.length > 1) {
-      result = result.filter((t) => selectedStatuses.includes(t.status))
     }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
@@ -130,7 +273,7 @@ export default function Dashboard() {
       })
     }
     return result
-  }, [trips, selectedDrivers, selectedStatuses, searchQuery, drivers])
+  }, [trips, selectedDrivers, searchQuery, drivers])
 
   // Derive filter options from current data
   const availableDrivers = useMemo(() => {
@@ -138,16 +281,16 @@ export default function Dashboard() {
     return ids.map((id) => drivers.find((d) => d.id === id)).filter(Boolean)
   }, [trips, drivers])
 
-  const availableStatuses = useMemo(() => {
-    return [...new Set(trips.map((t) => t.status))]
-  }, [trips])
-
   // Chip helpers
   const activeChips = useMemo(() => {
     const chips = []
-    const p = PERIOD_OPTIONS.find((o) => o.value === period)
-    if (p && period !== 'active') {
-      chips.push({ key: 'period', label: p.label, onRemove: () => setPeriod('active') })
+    if (statusFilter !== 'in_progress') {
+      const s = STATUS_OPTIONS.find((o) => o.value === statusFilter)
+      if (s) chips.push({ key: 'status', label: s.label, onRemove: () => { setStatusFilter('in_progress'); setPeriod('') } })
+    }
+    if (showPeriod && period) {
+      const p = PERIOD_OPTIONS.find((o) => o.value === period)
+      if (p) chips.push({ key: 'period', label: p.label, onRemove: () => { setPeriod(''); setCustomStart(''); setCustomEnd('') } })
     }
     selectedDrivers.forEach((id) => {
       const d = drivers.find((dr) => dr.id === id)
@@ -159,37 +302,21 @@ export default function Dashboard() {
         })
       }
     })
-    selectedStatuses.forEach((s) => {
-      const cfg = STATUS_CONFIG[s]
-      if (cfg) {
-        chips.push({
-          key: `status-${s}`,
-          label: cfg.label,
-          onRemove: () => setSelectedStatuses((prev) => prev.filter((x) => x !== s)),
-        })
-      }
-    })
     return chips
-  }, [period, selectedDrivers, selectedStatuses, drivers])
+  }, [statusFilter, showPeriod, period, selectedDrivers, drivers])
 
   const clearAllFilters = () => {
-    setPeriod('active')
+    setStatusFilter('in_progress')
+    setPeriod('')
     setCustomStart('')
     setCustomEnd('')
     setSelectedDrivers([])
-    setSelectedStatuses([])
     setSearchQuery('')
   }
 
   const toggleDriver = (id) => {
     setSelectedDrivers((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    )
-  }
-
-  const toggleStatus = (status) => {
-    setSelectedStatuses((prev) =>
-      prev.includes(status) ? prev.filter((x) => x !== status) : [...prev, status]
     )
   }
 
@@ -250,51 +377,51 @@ export default function Dashboard() {
                   ))}
                 </select>
                 {period === 'custom' && (
-                  <div className="mt-2 flex gap-2">
-                    <input
-                      type="date"
+                  <div className="mt-3 space-y-2">
+                    <DatePickerField
+                      label="Desde"
                       value={customStart}
-                      onChange={(e) => setCustomStart(e.target.value)}
-                      className="flex-1 bg-neutral-200 border-none rounded py-2 px-2 text-xs focus:ring-2 focus:ring-primary-main/20"
+                      onChange={setCustomStart}
                     />
-                    <input
-                      type="date"
+                    <DatePickerField
+                      label="Hasta"
                       value={customEnd}
-                      onChange={(e) => setCustomEnd(e.target.value)}
-                      className="flex-1 bg-neutral-200 border-none rounded py-2 px-2 text-xs focus:ring-2 focus:ring-primary-main/20"
+                      onChange={setCustomEnd}
                     />
                   </div>
                 )}
               </div>
 
-              {/* Status filter */}
-              {availableStatuses.length > 0 && (
-                <div className="mb-5">
-                  <label className="block text-[11px] font-bold uppercase tracking-[1px] text-neutral-600 mb-2">
-                    Estado
-                  </label>
-                  <div className="flex flex-col gap-1">
-                    {availableStatuses.map((s) => {
-                      const cfg = STATUS_CONFIG[s] || { label: s, color: 'bg-neutral-500' }
-                      const active = selectedStatuses.includes(s)
-                      return (
-                        <button
-                          key={s}
-                          onClick={() => toggleStatus(s)}
-                          className={`flex items-center gap-2.5 px-3 py-2 rounded text-sm transition-all text-left ${
-                            active
-                              ? 'bg-primary-subtle text-primary-main font-semibold'
-                              : 'text-neutral-700 hover:bg-neutral-200'
-                          }`}
-                        >
+              {/* Status */}
+              <div className="mb-5">
+                <label className="block text-[11px] font-bold uppercase tracking-[1px] text-neutral-600 mb-2">
+                  Estado
+                </label>
+                <div className="flex flex-col gap-1">
+                  {STATUS_OPTIONS.map((opt) => {
+                    const active = statusFilter === opt.value
+                    const cfg = STATUS_CONFIG[opt.value]
+                    return (
+                      <button
+                        key={opt.value}
+                        onClick={() => setStatusFilter(opt.value)}
+                        className={`flex items-center gap-2.5 px-3 py-2 rounded text-sm transition-all text-left ${
+                          active
+                            ? 'bg-primary-subtle text-primary-main font-semibold'
+                            : 'text-neutral-700 hover:bg-neutral-200'
+                        }`}
+                      >
+                        {cfg ? (
                           <span className={`w-2 h-2 rounded-full ${cfg.color}`} />
-                          {cfg.label}
-                        </button>
-                      )
-                    })}
-                  </div>
+                        ) : (
+                          <span className="w-2 h-2 rounded-full bg-neutral-400" />
+                        )}
+                        {opt.label}
+                      </button>
+                    )
+                  })}
                 </div>
-              )}
+              </div>
 
               {/* Driver filter */}
               {availableDrivers.length > 0 && (

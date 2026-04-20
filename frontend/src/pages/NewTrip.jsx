@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api, getDrivers } from '../api'
+import useEscapeKey from '../hooks/useEscapeKey'
 
 export default function NewTripModal({ open, onClose, onCreated }) {
   const [drivers, setDrivers] = useState([])
   const [loadingDrivers, setLoadingDrivers] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  useEscapeKey(onClose, open)
 
   const emptyForm = {
     load_date: '',

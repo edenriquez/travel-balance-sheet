@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { getTrip, getDrivers, approveMovement, closeTrip } from '../api'
+import useEscapeKey from '../hooks/useEscapeKey'
 import RejectMovementModal from './RejectMovementModal'
 import EvidenceGalleryModal from './EvidenceGalleryModal'
 
@@ -46,6 +47,9 @@ export default function TripDetail() {
   const [approvedFlash, setApprovedFlash] = useState(null)
   const [confirmClose, setConfirmClose] = useState(false)
   const [closing, setClosing] = useState(false)
+  const [closeNotes, setCloseNotes] = useState('')
+
+  useEscapeKey(() => setConfirmClose(false), confirmClose)
 
   const loadTrip = useCallback(async () => {
     try {
@@ -86,9 +90,10 @@ export default function TripDetail() {
   async function handleCloseTrip() {
     setClosing(true)
     try {
-      await closeTrip(id)
+      await closeTrip(id, { notes: closeNotes })
       await loadTrip()
       setConfirmClose(false)
+      setCloseNotes('')
     } catch (e) {
       setError(e.message)
     } finally {
@@ -177,6 +182,17 @@ export default function TripDetail() {
           )}
         </div>
       </div>
+
+      {/* Notes (shown when trip has notes) */}
+      {trip.notes && (
+        <div className="mb-6 flex items-start gap-3 rounded-xl bg-neutral-200/60 border border-neutral-300/50 px-5 py-4">
+          <span className="material-icons text-neutral-500 text-lg mt-0.5">sticky_note_2</span>
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[1px] text-neutral-500 mb-1">Notas</p>
+            <p className="text-sm text-neutral-700 whitespace-pre-line">{trip.notes}</p>
+          </div>
+        </div>
+      )}
 
       {/* Summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -413,6 +429,18 @@ export default function TripDetail() {
                   <span className="text-neutral-500">Neto</span>
                   <span className={`font-bold ${balance >= 0 ? 'text-primary-main' : 'text-error-main'}`}>{formatMoney(balance)}</span>
                 </div>
+              </div>
+
+              <div className="mt-4">
+                <label className="block text-sm font-semibold text-neutral-900 mb-1.5">Notas (opcional)</label>
+                <textarea
+                  value={closeNotes}
+                  onChange={(e) => setCloseNotes(e.target.value)}
+                  rows={3}
+                  maxLength={2048}
+                  className="w-full rounded border border-neutral-300 bg-white px-4 py-2.5 text-sm focus:border-primary-main focus:ring-2 focus:ring-primary-main/20 resize-none"
+                  placeholder="Observaciones sobre el viaje..."
+                />
               </div>
 
               {expense.some((m) => (m.evidence_status || 'pending') === 'pending') && (
