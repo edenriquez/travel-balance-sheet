@@ -136,6 +136,7 @@ async def reject_movement_endpoint(
         trip_id=UUID(trip_id),
         movement_id=UUID(movement_id),
         rejection_reason=body.rejection_reason,
+        rejection_type=body.rejection_type,
         notify_whatsapp=body.notify_whatsapp,
     )
 

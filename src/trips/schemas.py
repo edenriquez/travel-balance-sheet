@@ -1,4 +1,5 @@
 from datetime import date, datetime, time
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -55,6 +56,7 @@ class MovementCreate(BaseModel):
 
 class RejectMovement(BaseModel):
     rejection_reason: str = Field(..., min_length=1, max_length=1024)
+    rejection_type: Literal["soft", "hard"] = "soft"
     notify_whatsapp: bool = False
 
 
@@ -74,6 +76,7 @@ class MovementResponse(BaseModel):
     evidence_type: str | None = None
     evidence_status: str = "pending"
     rejection_reason: str | None = None
+    rejection_type: str | None = None
     rejected_at: datetime | None = None
 
 

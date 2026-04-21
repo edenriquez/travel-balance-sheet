@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config import settings
@@ -22,17 +22,16 @@ def _fmt_amount(amount) -> str:
         return str(amount)
 
 
-async def create_pending_evidence_notifications(
+async def refresh_pending_evidence_rollup(
     session: AsyncSession,
     *,
     company_id: UUID,
     trip_id: UUID,
-    movement_id: UUID,
-    movement_concept: str,
-    movement_amount,
-    currency: str,
 ) -> int:
-    """Notify each accountant in the company. Idempotent: reuses/reopens existing rows."""
+    """Upsert one rollup notification per accountant summarizing pending movements on this trip.
+
+    If count reaches 0, auto-acks the existing rollup. Returns number of rows touched.
+    """
     result = await session.execute(
         select(CompanyMember.user_id).where(
             CompanyMember.company_id == company_id,
@@ -43,40 +42,67 @@ async def create_pending_evidence_notifications(
     if not accountant_ids:
         return 0
 
-    result = await session.execute(
-        select(Notification).where(Notification.movement_id == movement_id)
+    count_result = await session.execute(
+        select(func.count(Movement.id)).where(
+            Movement.trip_id == trip_id,
+            Movement.evidence_status == "pending",
+        )
     )
-    existing_by_user = {n.user_id: n for n in result.scalars().all()}
+    pending_count = int(count_result.scalar() or 0)
 
-    deep_link = _trip_detail_path(trip_id)
-    title = "Evidencia pendiente de revisión"
+    trip_result = await session.execute(select(Trip).where(Trip.id == trip_id))
+    trip = trip_result.scalar_one_or_none()
+    if trip is None:
+        return 0
+    trip_label = f"{trip.origin_name} → {trip.destination_name}"
+    if trip.folio:
+        trip_label = f"{trip.folio} · {trip_label}"
+
+    title = "Evidencias pendientes de revisión"
+    plural = "s" if pending_count != 1 else ""
     body = (
-        f'Movimiento "{movement_concept}" por {_fmt_amount(movement_amount)} {currency} '
-        "requiere tu atención."
+        f"Viaje {trip_label}: {pending_count} gasto{plural} pendiente{plural} de revisión."
     )
+    deep_link = _trip_detail_path(trip_id)
+
+    now = datetime.now(timezone.utc)
     touched = 0
     for uid in accountant_ids:
-        existing = existing_by_user.get(uid)
-        if existing is not None:
-            if existing.acknowledged_at is not None:
-                existing.acknowledged_at = None
-                existing.title = title
-                existing.body = body
-                existing.deep_link = deep_link
+        result = await session.execute(
+            select(Notification).where(
+                Notification.trip_id == trip_id,
+                Notification.user_id == uid,
+                Notification.kind == "pending_evidence",
+                Notification.acknowledged_at.is_(None),
+            )
+        )
+        existing = result.scalar_one_or_none()
+
+        if pending_count == 0:
+            if existing is not None:
+                existing.acknowledged_at = now
                 touched += 1
             continue
-        n = Notification(
-            company_id=company_id,
-            user_id=uid,
-            trip_id=trip_id,
-            movement_id=movement_id,
-            kind="pending_evidence",
-            title=title,
-            body=body,
-            deep_link=deep_link,
-        )
-        session.add(n)
-        touched += 1
+
+        if existing is not None:
+            existing.title = title
+            existing.body = body
+            existing.deep_link = deep_link
+            existing.movement_id = None
+            touched += 1
+        else:
+            n = Notification(
+                company_id=company_id,
+                user_id=uid,
+                trip_id=trip_id,
+                movement_id=None,
+                kind="pending_evidence",
+                title=title,
+                body=body,
+                deep_link=deep_link,
+            )
+            session.add(n)
+            touched += 1
     if touched:
         await session.flush()
     return touched
@@ -89,19 +115,13 @@ async def ensure_pending_evidence_notifications_for_movement(
     trip_id: UUID,
     movement: Movement,
 ) -> None:
-    """If movement has evidence and status is pending, notify accountants."""
+    """Back-compat shim: refresh the trip's rollup notification."""
     if not movement.evidence_url:
         return
     if movement.evidence_status != "pending":
         return
-    await create_pending_evidence_notifications(
-        session,
-        company_id=company_id,
-        trip_id=trip_id,
-        movement_id=movement.id,
-        movement_concept=movement.concept,
-        movement_amount=movement.amount,
-        currency=movement.currency,
+    await refresh_pending_evidence_rollup(
+        session, company_id=company_id, trip_id=trip_id
     )
 
 
@@ -141,14 +161,8 @@ async def create_notifications_from_request(
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
-    return await create_pending_evidence_notifications(
-        session,
-        company_id=company_id,
-        trip_id=trip_id,
-        movement_id=movement.id,
-        movement_concept=movement.concept,
-        movement_amount=movement.amount,
-        currency=movement.currency,
+    return await refresh_pending_evidence_rollup(
+        session, company_id=company_id, trip_id=trip_id
     )
 
 
@@ -159,6 +173,21 @@ async def list_notifications_for_user(
     user_id: UUID,
     unacknowledged_only: bool = False,
 ) -> list[dict]:
+    stale_trips_result = await session.execute(
+        select(Notification.trip_id)
+        .where(
+            Notification.company_id == company_id,
+            Notification.user_id == user_id,
+            Notification.kind == "pending_evidence",
+            Notification.acknowledged_at.is_(None),
+        )
+        .distinct()
+    )
+    for (trip_id,) in stale_trips_result.all():
+        await refresh_pending_evidence_rollup(
+            session, company_id=company_id, trip_id=trip_id
+        )
+
     q = select(Notification).where(
         Notification.company_id == company_id,
         Notification.user_id == user_id,

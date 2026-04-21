@@ -364,8 +364,8 @@ export default function TripDetail() {
                 <th className="px-6 py-3.5 text-[11px] font-bold text-neutral-600 uppercase tracking-wider">Fecha</th>
                 <th className="px-6 py-3.5 text-[11px] font-bold text-neutral-600 uppercase tracking-wider text-right">Monto</th>
                 <th className="px-4 py-3.5 text-[11px] font-bold text-neutral-600 uppercase tracking-wider text-center">Ticket</th>
-                <th className="px-6 py-3.5 text-[11px] font-bold text-neutral-600 uppercase tracking-wider">Estado</th>
                 <th className="px-6 py-3.5 text-[11px] font-bold text-neutral-600 uppercase tracking-wider text-center">Acciones</th>
+                <th className="px-6 py-3.5 text-[11px] font-bold text-neutral-600 uppercase tracking-wider">Estado</th>
               </tr>
             </thead>
             <tbody>
@@ -384,7 +384,10 @@ export default function TripDetail() {
                   approved: { label: 'Aprobado', bg: 'bg-success-light', text: 'text-success-main' },
                   rejected: { label: 'Rechazado', bg: 'bg-error-light', text: 'text-error-main' },
                 }
-                const st = statusConfig[status] || statusConfig.pending
+                let st = statusConfig[status] || statusConfig.pending
+                if (status === 'rejected' && m.rejection_type === 'hard') {
+                  st = { label: 'Rechazo definitivo', bg: 'bg-error-main', text: 'text-white' }
+                }
                 const evidenceItems = expense.filter((e) => e.evidence_url)
                 const galleryIdx = m.evidence_url ? evidenceItems.findIndex((e) => e.id === m.id) : -1
                 const isFlashing = approvedFlash === m.id
@@ -440,11 +443,6 @@ export default function TripDetail() {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold ${st.bg} ${st.text}`}>
-                        {st.label}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
                       {status === 'pending' && !isClosed && (
                         <div className="flex items-center justify-center gap-1.5">
                           <button
@@ -464,6 +462,11 @@ export default function TripDetail() {
                           </button>
                         </div>
                       )}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold ${st.bg} ${st.text}`}>
+                        {st.label}
+                      </span>
                     </td>
                   </tr>
                 )
@@ -746,7 +749,7 @@ export default function TripDetail() {
                 <button
                   onClick={handleReviewApprove}
                   disabled={reviewSaving || !reviewConcept.trim() || !reviewAmount}
-                  className="btn btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn btn-primary flex items-center gap-2 w-[180px] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {reviewSaving ? (
                     <>

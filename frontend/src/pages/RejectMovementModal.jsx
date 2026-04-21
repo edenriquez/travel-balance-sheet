@@ -30,6 +30,7 @@ function getConceptIcon(concept) {
 
 export default function RejectMovementModal({ open, movement, tripId, onClose, onRejected }) {
   const [reason, setReason] = useState('')
+  const [rejectionType, setRejectionType] = useState('soft')
   const [notifyWhatsApp, setNotifyWhatsApp] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -48,10 +49,12 @@ export default function RejectMovementModal({ open, movement, tripId, onClose, o
     try {
       const updated = await rejectMovement(tripId, movement.id, {
         rejection_reason: reason.trim(),
+        rejection_type: rejectionType,
         notify_whatsapp: notifyWhatsApp,
       })
       onRejected(updated)
       setReason('')
+      setRejectionType('soft')
       setError('')
     } catch (e) {
       setError(e.message)
@@ -63,6 +66,7 @@ export default function RejectMovementModal({ open, movement, tripId, onClose, o
   function handleClose() {
     if (submitting) return
     setReason('')
+    setRejectionType('soft')
     setError('')
     onClose()
   }
@@ -120,6 +124,55 @@ export default function RejectMovementModal({ open, movement, tripId, onClose, o
             />
           </div>
 
+          {/* Rejection type */}
+          <div>
+            <label className="block text-sm font-semibold text-neutral-900 mb-1.5">
+              Tipo de rechazo
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setRejectionType('soft')}
+                disabled={submitting}
+                className={`text-left rounded border p-3 transition-all ${
+                  rejectionType === 'soft'
+                    ? 'border-primary-main bg-primary-subtle'
+                    : 'border-neutral-300 bg-white hover:bg-neutral-100'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className={`material-icons text-base ${rejectionType === 'soft' ? 'text-primary-main' : 'text-neutral-400'}`}>
+                    autorenew
+                  </span>
+                  <span className="text-sm font-semibold text-neutral-900">Puede reenviar</span>
+                </div>
+                <p className="text-xs text-neutral-500 mt-1">
+                  El chofer puede mandar otra evidencia para este gasto.
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setRejectionType('hard')}
+                disabled={submitting}
+                className={`text-left rounded border p-3 transition-all ${
+                  rejectionType === 'hard'
+                    ? 'border-error-main bg-error-light'
+                    : 'border-neutral-300 bg-white hover:bg-neutral-100'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span className={`material-icons text-base ${rejectionType === 'hard' ? 'text-error-main' : 'text-neutral-400'}`}>
+                    block
+                  </span>
+                  <span className="text-sm font-semibold text-neutral-900">Rechazo definitivo</span>
+                </div>
+                <p className="text-xs text-neutral-500 mt-1">
+                  No acepta reenvio. El gasto queda cerrado.
+                </p>
+              </button>
+            </div>
+          </div>
+
           {/* WhatsApp toggle */}
           <div className="flex items-center justify-between p-4 bg-primary-subtle rounded">
             <div className="flex items-center gap-3">
@@ -153,7 +206,7 @@ export default function RejectMovementModal({ open, movement, tripId, onClose, o
           <button
             onClick={handleConfirm}
             disabled={submitting || !reason.trim()}
-            className="btn btn-danger flex-[1.5] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn btn-danger flex-[1.5] min-w-0 flex items-center justify-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? (
               <>

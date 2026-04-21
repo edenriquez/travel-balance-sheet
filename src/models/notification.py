@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint
+from sqlalchemy import DateTime, ForeignKey, Index, String, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -25,8 +25,8 @@ class Notification(Base):
     trip_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("trip.id", ondelete="CASCADE"), nullable=False
     )
-    movement_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("movement.id", ondelete="CASCADE"), nullable=False
+    movement_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("movement.id", ondelete="CASCADE"), nullable=True
     )
     kind: Mapped[str] = mapped_column(String(64), nullable=False)  # pending_evidence
     title: Mapped[str] = mapped_column(String(512), nullable=False)
@@ -40,5 +40,12 @@ class Notification(Base):
     )
 
     __table_args__ = (
-        UniqueConstraint("movement_id", "user_id", name="notification_movement_id_user_id_key"),
+        Index(
+            "notification_trip_user_kind_unack_key",
+            "trip_id",
+            "user_id",
+            "kind",
+            unique=True,
+            postgresql_where=text("acknowledged_at IS NULL"),
+        ),
     )

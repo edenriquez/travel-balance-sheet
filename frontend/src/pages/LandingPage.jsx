@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import LandingDemo from './LandingDemo'
 
 export default function LandingPage() {
   return (
@@ -63,6 +64,9 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
+
+        {/* Interactive demo */}
+        <LandingDemo />
 
         {/* Features */}
         <section className="px-6 py-20 lg:px-20 bg-neutral-100" id="caracteristicas">

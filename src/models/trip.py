@@ -67,5 +67,6 @@ class Movement(Base):
     evidence_type: Mapped[str | None] = mapped_column(String(16), nullable=True)  # image | audio
     evidence_status: Mapped[str] = mapped_column(String(32), default="pending", nullable=False)  # pending | approved | rejected
     rejection_reason: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+    rejection_type: Mapped[str | None] = mapped_column(String(16), nullable=True)  # soft | hard
     rejected_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)

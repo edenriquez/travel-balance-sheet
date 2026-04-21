@@ -11,6 +11,7 @@ from src.models import Driver, Movement, Trip
 from src.notifications.service import (
     acknowledge_all_for_movement,
     ensure_pending_evidence_notifications_for_movement,
+    refresh_pending_evidence_rollup,
 )
 from src.whatsapp import (
     send_approval_notice,
@@ -234,6 +235,7 @@ async def add_movement(
         "evidence_type": movement.evidence_type,
         "evidence_status": movement.evidence_status,
         "rejection_reason": movement.rejection_reason,
+        "rejection_type": movement.rejection_type,
         "rejected_at": movement.rejected_at,
     }
 
@@ -288,6 +290,9 @@ async def approve_movement(
     await acknowledge_all_for_movement(
         session, company_id=company_id, movement_id=movement_id
     )
+    await refresh_pending_evidence_rollup(
+        session, company_id=company_id, trip_id=trip_id
+    )
 
     driver = await _get_driver_for_trip(session, trip)
     if driver and driver.whatsapp_phone:
@@ -319,6 +324,7 @@ async def reject_movement(
     trip_id: UUID,
     movement_id: UUID,
     rejection_reason: str,
+    rejection_type: str = "soft",
     notify_whatsapp: bool = False,
 ) -> dict:
     result = await session.execute(
@@ -339,12 +345,16 @@ async def reject_movement(
 
     movement.evidence_status = "rejected"
     movement.rejection_reason = rejection_reason
+    movement.rejection_type = rejection_type if rejection_type in ("soft", "hard") else "soft"
     movement.rejected_at = datetime.now(timezone.utc)
 
     await session.flush()
 
     await acknowledge_all_for_movement(
         session, company_id=company_id, movement_id=movement_id
+    )
+    await refresh_pending_evidence_rollup(
+        session, company_id=company_id, trip_id=trip_id
     )
 
     if notify_whatsapp:
@@ -357,6 +367,7 @@ async def reject_movement(
                 amount=_to_float(movement.amount),
                 reason=rejection_reason,
                 folio=trip.folio,
+                rejection_type=movement.rejection_type or "soft",
             )
 
     return {
@@ -370,6 +381,7 @@ async def reject_movement(
         "evidence_type": movement.evidence_type,
         "evidence_status": movement.evidence_status,
         "rejection_reason": movement.rejection_reason,
+        "rejection_type": movement.rejection_type,
         "rejected_at": movement.rejected_at,
     }
 
@@ -384,7 +396,11 @@ async def get_trip_detail(
     if not trip:
         raise AppError("Viaje no encontrado", status_code=status.HTTP_404_NOT_FOUND)
 
-    result = await session.execute(select(Movement).where(Movement.trip_id == trip.id))
+    result = await session.execute(
+        select(Movement)
+        .where(Movement.trip_id == trip.id)
+        .order_by(Movement.created_at.desc())
+    )
     movements = result.scalars().all()
 
     return {
@@ -418,6 +434,7 @@ async def get_trip_detail(
                 "evidence_type": m.evidence_type,
                 "evidence_status": m.evidence_status,
                 "rejection_reason": m.rejection_reason,
+                "rejection_type": m.rejection_type,
                 "rejected_at": m.rejected_at,
             }
             for m in movements

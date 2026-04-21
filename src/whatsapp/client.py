@@ -79,14 +79,19 @@ async def send_rejection_notice(
     amount: float,
     reason: str,
     folio: str | None = None,
+    rejection_type: str = "soft",
 ) -> dict | None:
     """Notify a driver that an expense was rejected."""
     folio_str = f" (Folio #{folio})" if folio else ""
+    if rejection_type == "hard":
+        closing = "Este gasto fue cerrado y no acepta reenvio."
+    else:
+        closing = "Por favor revisa y reenvia la evidencia."
     body = (
         f"Hola {driver_name}, tu gasto de *{concept}* "
         f"por *${amount:,.2f} MXN*{folio_str} fue *rechazado*.\n\n"
         f"Motivo: _{reason}_\n\n"
-        f"Por favor revisa y reenvia la evidencia."
+        f"{closing}"
     )
     return await send_text_message(to, body)
 

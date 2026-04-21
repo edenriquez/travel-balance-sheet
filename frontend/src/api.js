@@ -56,10 +56,10 @@ export async function approveMovement(tripId, movementId, overrides = null) {
   return api(`/api/trips/${tripId}/movements/${movementId}/approve`, opts)
 }
 
-export async function rejectMovement(tripId, movementId, { rejection_reason, notify_whatsapp }) {
+export async function rejectMovement(tripId, movementId, { rejection_reason, rejection_type, notify_whatsapp }) {
   return api(`/api/trips/${tripId}/movements/${movementId}/reject`, {
     method: 'PATCH',
-    body: JSON.stringify({ rejection_reason, notify_whatsapp }),
+    body: JSON.stringify({ rejection_reason, rejection_type, notify_whatsapp }),
   })
 }
 

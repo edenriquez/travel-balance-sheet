@@ -8,15 +8,12 @@ import re
 from datetime import date
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config import settings
 from src.models import Driver, Movement, Trip
-from src.notifications.service import (
-    create_pending_evidence_notifications,
-    ensure_pending_evidence_notifications_for_movement,
-)
+from src.notifications.service import refresh_pending_evidence_rollup
 from src.storage import (
     ALLOWED_AUDIO_TYPES,
     ALLOWED_CONTENT_TYPES,
@@ -285,7 +282,11 @@ async def handle_inbound_message(
 
     rejected_result = await session.execute(
         select(Movement)
-        .where(Movement.trip_id == trip.id, Movement.evidence_status == "rejected")
+        .where(
+            Movement.trip_id == trip.id,
+            Movement.evidence_status == "rejected",
+            or_(Movement.rejection_type.is_(None), Movement.rejection_type == "soft"),
+        )
         .order_by(Movement.rejected_at.asc())
         .limit(1)
     )
@@ -304,6 +305,7 @@ async def handle_inbound_message(
         rejected.amount = amount
         rejected.evidence_status = "pending"
         rejected.rejection_reason = None
+        rejected.rejection_type = None
         rejected.rejected_at = None
         if delta:
             if rejected.type == "income":
@@ -311,16 +313,10 @@ async def handle_inbound_message(
             else:
                 trip.total_expense = float(trip.total_expense or 0) + delta
         await session.flush()
-        created = await create_pending_evidence_notifications(
-            session,
-            company_id=driver.company_id,
-            trip_id=trip.id,
-            movement_id=rejected.id,
-            movement_concept=rejected.concept,
-            movement_amount=rejected.amount,
-            currency=rejected.currency,
+        touched = await refresh_pending_evidence_rollup(
+            session, company_id=driver.company_id, trip_id=trip.id
         )
-        print(f"[WA] Revision notifications created={created}", flush=True)
+        print(f"[WA] Revision rollup touched={touched}", flush=True)
         await session.commit()
 
         await send_ack(driver.whatsapp_phone, _ack_for_submission(concept, amount, parsed_amount is not None))
