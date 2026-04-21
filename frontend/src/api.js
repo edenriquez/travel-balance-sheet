@@ -45,10 +45,15 @@ export async function getDrivers() {
   return api('/api/drivers')
 }
 
-export async function approveMovement(tripId, movementId) {
-  return api(`/api/trips/${tripId}/movements/${movementId}/approve`, {
-    method: 'PATCH',
-  })
+export async function approveMovement(tripId, movementId, overrides = null) {
+  const opts = { method: 'PATCH' }
+  if (overrides && (overrides.concept !== undefined || overrides.amount !== undefined)) {
+    const body = {}
+    if (overrides.concept !== undefined) body.concept = overrides.concept
+    if (overrides.amount !== undefined) body.amount = overrides.amount
+    opts.body = JSON.stringify(body)
+  }
+  return api(`/api/trips/${tripId}/movements/${movementId}/approve`, opts)
 }
 
 export async function rejectMovement(tripId, movementId, { rejection_reason, notify_whatsapp }) {
@@ -56,6 +61,33 @@ export async function rejectMovement(tripId, movementId, { rejection_reason, not
     method: 'PATCH',
     body: JSON.stringify({ rejection_reason, notify_whatsapp }),
   })
+}
+
+export async function addMovement(tripId, { type = 'expense', concept, amount, currency = 'MXN', movement_date, evidence }) {
+  const form = new FormData()
+  form.append('type', type)
+  form.append('concept', concept)
+  form.append('amount', String(amount))
+  form.append('currency', currency)
+  form.append('movement_date', movement_date)
+  if (evidence) form.append('evidence', evidence)
+
+  const url = `${getBaseUrl()}/api/trips/${tripId}/movements`
+  const token = getToken()
+  const headers = {}
+  if (token) headers.Authorization = `Bearer ${token}`
+
+  const res = await fetch(url, { method: 'POST', headers, body: form })
+  if (res.status === 401) {
+    clearAuth()
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body.detail || 'Sesión expirada')
+  }
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body.detail || res.statusText || `Error ${res.status}`)
+  }
+  return res.json()
 }
 
 export async function closeTrip(tripId, { notes } = {}) {

@@ -30,6 +30,7 @@ class Config(BaseSettings):
     # WhatsApp (Kapso)
     KAPSO_API_KEY: str = ""
     KAPSO_PHONE_NUMBER_ID: str = ""
+    KAPSO_WEBHOOK_SECRET: str = ""
 
     # MinIO (S3-compatible storage)
     MINIO_ENDPOINT: str = "localhost:9000"

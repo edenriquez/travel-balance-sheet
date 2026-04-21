@@ -12,7 +12,11 @@ from src.notifications.service import (
     acknowledge_all_for_movement,
     ensure_pending_evidence_notifications_for_movement,
 )
-from src.whatsapp import send_rejection_notice, send_approval_notice
+from src.whatsapp import (
+    send_approval_notice,
+    send_rejection_notice,
+    send_trip_started_notice,
+)
 
 
 def _to_float(v) -> float:
@@ -56,6 +60,16 @@ async def create_trip(session: AsyncSession, *, company_id: UUID, data: dict) ->
     )
     session.add(trip)
     await session.flush()
+
+    if driver.whatsapp_phone:
+        await send_trip_started_notice(
+            to=driver.whatsapp_phone,
+            driver_name=driver.name,
+            folio=trip.folio,
+            origin=trip.origin_name,
+            destination=trip.destination_name,
+            client=trip.delivery_client,
+        )
 
     return {
         "id": str(trip.id),
@@ -191,6 +205,7 @@ async def add_movement(
         currency=data.get("currency", "MXN"),
         movement_date=data["movement_date"],
         evidence_url=data.get("evidence_url"),
+        evidence_type=data.get("evidence_type"),
     )
     session.add(movement)
 
@@ -216,6 +231,7 @@ async def add_movement(
         "currency": movement.currency,
         "movement_date": movement.movement_date,
         "evidence_url": movement.evidence_url,
+        "evidence_type": movement.evidence_type,
         "evidence_status": movement.evidence_status,
         "rejection_reason": movement.rejection_reason,
         "rejected_at": movement.rejected_at,
@@ -235,6 +251,8 @@ async def approve_movement(
     company_id: UUID,
     trip_id: UUID,
     movement_id: UUID,
+    concept: str | None = None,
+    amount: float | None = None,
 ) -> dict:
     result = await session.execute(
         select(Trip).where(Trip.id == trip_id, Trip.company_id == company_id)
@@ -251,6 +269,17 @@ async def approve_movement(
         raise AppError(
             "Movimiento no encontrado", status_code=status.HTTP_404_NOT_FOUND
         )
+
+    if concept is not None:
+        movement.concept = concept
+
+    if amount is not None:
+        delta = amount - _to_float(movement.amount)
+        movement.amount = amount
+        if movement.type == "income":
+            trip.total_income = _to_float(trip.total_income) + delta
+        else:
+            trip.total_expense = _to_float(trip.total_expense) + delta
 
     movement.evidence_status = "approved"
 
@@ -278,6 +307,7 @@ async def approve_movement(
         "currency": movement.currency,
         "movement_date": movement.movement_date,
         "evidence_url": movement.evidence_url,
+        "evidence_type": movement.evidence_type,
         "evidence_status": movement.evidence_status,
     }
 
@@ -337,6 +367,7 @@ async def reject_movement(
         "currency": movement.currency,
         "movement_date": movement.movement_date,
         "evidence_url": movement.evidence_url,
+        "evidence_type": movement.evidence_type,
         "evidence_status": movement.evidence_status,
         "rejection_reason": movement.rejection_reason,
         "rejected_at": movement.rejected_at,
@@ -384,6 +415,7 @@ async def get_trip_detail(
                 "currency": m.currency,
                 "movement_date": m.movement_date,
                 "evidence_url": m.evidence_url,
+                "evidence_type": m.evidence_type,
                 "evidence_status": m.evidence_status,
                 "rejection_reason": m.rejection_reason,
                 "rejected_at": m.rejected_at,

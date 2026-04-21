@@ -14,9 +14,44 @@ logger = logging.getLogger(__name__)
 
 from src.config import settings
 
-ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
+ALLOWED_AUDIO_TYPES = {
+    "audio/ogg",
+    "audio/opus",
+    "audio/mpeg",
+    "audio/mp4",
+    "audio/amr",
+    "audio/aac",
+    "audio/webm",
+    "audio/wav",
+    "audio/x-wav",
+    "audio/x-m4a",
+    "audio/3gpp",
+}
+ALLOWED_CONTENT_TYPES = ALLOWED_IMAGE_TYPES | ALLOWED_AUDIO_TYPES
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
-EXTENSION_MAP = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}
+EXTENSION_MAP = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "audio/ogg": "ogg",
+    "audio/opus": "opus",
+    "audio/mpeg": "mp3",
+    "audio/mp4": "m4a",
+    "audio/amr": "amr",
+    "audio/aac": "aac",
+    "audio/webm": "webm",
+    "audio/wav": "wav",
+    "audio/x-wav": "wav",
+    "audio/x-m4a": "m4a",
+    "audio/3gpp": "3gp",
+}
+
+
+def evidence_type_for_content(content_type: str) -> str:
+    if content_type in ALLOWED_AUDIO_TYPES:
+        return "audio"
+    return "image"
 
 
 @lru_cache(maxsize=1)

@@ -58,6 +58,11 @@ class RejectMovement(BaseModel):
     notify_whatsapp: bool = False
 
 
+class ApproveMovement(BaseModel):
+    concept: str | None = Field(None, min_length=1, max_length=512)
+    amount: float | None = Field(None, gt=0)
+
+
 class MovementResponse(BaseModel):
     id: str
     type: str
@@ -66,6 +71,7 @@ class MovementResponse(BaseModel):
     currency: str
     movement_date: date
     evidence_url: str | None = None
+    evidence_type: str | None = None
     evidence_status: str = "pending"
     rejection_reason: str | None = None
     rejected_at: datetime | None = None

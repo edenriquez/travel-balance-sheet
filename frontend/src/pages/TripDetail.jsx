@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { getTrip, getDrivers, approveMovement, closeTrip } from '../api'
+import { getTrip, getDrivers, approveMovement, closeTrip, addMovement } from '../api'
 import useEscapeKey from '../hooks/useEscapeKey'
 import RejectMovementModal from './RejectMovementModal'
 import EvidenceGalleryModal from './EvidenceGalleryModal'
@@ -43,13 +43,32 @@ export default function TripDetail() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [rejectTarget, setRejectTarget] = useState(null)
+  const [reviewTarget, setReviewTarget] = useState(null)
+  const [reviewConcept, setReviewConcept] = useState('')
+  const [reviewAmount, setReviewAmount] = useState('')
+  const [reviewSaving, setReviewSaving] = useState(false)
+  const [reviewError, setReviewError] = useState('')
   const [galleryIndex, setGalleryIndex] = useState(null)
   const [approvedFlash, setApprovedFlash] = useState(null)
   const [confirmClose, setConfirmClose] = useState(false)
   const [closing, setClosing] = useState(false)
   const [closeNotes, setCloseNotes] = useState('')
+  const [showAddExpense, setShowAddExpense] = useState(false)
+  const [expenseForm, setExpenseForm] = useState({
+    type: 'expense',
+    concept: '',
+    amount: '',
+    currency: 'MXN',
+    movement_date: new Date().toISOString().split('T')[0],
+    evidence: null,
+  })
+  const [evidencePreview, setEvidencePreview] = useState(null)
+  const [addingExpense, setAddingExpense] = useState(false)
+  const [addExpenseError, setAddExpenseError] = useState('')
 
   useEscapeKey(() => setConfirmClose(false), confirmClose)
+  useEscapeKey(() => { resetExpenseForm(); setShowAddExpense(false) }, showAddExpense && !confirmClose)
+  useEscapeKey(() => setReviewTarget(null), !!reviewTarget)
 
   const loadTrip = useCallback(async () => {
     try {
@@ -78,13 +97,43 @@ export default function TripDetail() {
     loadTrip()
   }
 
-  async function handleApprove(movementId) {
+  async function handleApprove(movementId, overrides = null) {
     try {
-      await approveMovement(id, movementId)
+      await approveMovement(id, movementId, overrides)
       setApprovedFlash(movementId)
       setTimeout(() => setApprovedFlash(null), 600)
       loadTrip()
     } catch {}
+  }
+
+  function openReview(m) {
+    setReviewTarget(m)
+    setReviewConcept(m.concept || '')
+    setReviewAmount(Number(m.amount) > 0 ? String(m.amount) : '')
+    setReviewError('')
+  }
+
+  async function handleReviewApprove() {
+    if (!reviewTarget) return
+    const amt = Number(reviewAmount)
+    if (!reviewConcept.trim()) { setReviewError('El concepto es obligatorio'); return }
+    if (!Number.isFinite(amt) || amt <= 0) { setReviewError('Ingresa un monto válido mayor a 0'); return }
+    setReviewSaving(true)
+    setReviewError('')
+    try {
+      await approveMovement(id, reviewTarget.id, {
+        concept: reviewConcept.trim(),
+        amount: amt,
+      })
+      setApprovedFlash(reviewTarget.id)
+      setTimeout(() => setApprovedFlash(null), 600)
+      setReviewTarget(null)
+      await loadTrip()
+    } catch (err) {
+      setReviewError(err.message)
+    } finally {
+      setReviewSaving(false)
+    }
   }
 
   async function handleCloseTrip() {
@@ -98,6 +147,44 @@ export default function TripDetail() {
       setError(e.message)
     } finally {
       setClosing(false)
+    }
+  }
+
+  function resetExpenseForm() {
+    setExpenseForm({ type: 'expense', concept: '', amount: '', currency: 'MXN', movement_date: new Date().toISOString().split('T')[0], evidence: null })
+    setEvidencePreview(null)
+    setAddExpenseError('')
+  }
+
+  function handleEvidenceChange(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setExpenseForm((f) => ({ ...f, evidence: file }))
+    const reader = new FileReader()
+    reader.onload = (ev) => setEvidencePreview(ev.target.result)
+    reader.readAsDataURL(file)
+  }
+
+  function removeEvidence() {
+    setExpenseForm((f) => ({ ...f, evidence: null }))
+    setEvidencePreview(null)
+  }
+
+  async function handleAddExpense(e) {
+    e.preventDefault()
+    const { type, concept, amount, currency, movement_date, evidence } = expenseForm
+    if (!concept.trim() || !amount || !movement_date) return
+    setAddingExpense(true)
+    setAddExpenseError('')
+    try {
+      await addMovement(id, { type, concept: concept.trim(), amount: Number(amount), currency, movement_date, evidence })
+      resetExpenseForm()
+      setShowAddExpense(false)
+      await loadTrip()
+    } catch (err) {
+      setAddExpenseError(err.message)
+    } finally {
+      setAddingExpense(false)
     }
   }
 
@@ -256,7 +343,18 @@ export default function TripDetail() {
       <div className="bg-white rounded-xl shadow-card overflow-hidden">
         <div className="px-6 py-4 border-b border-neutral-200/60 flex items-center justify-between">
           <h2 className="font-bold text-neutral-900">Gastos del Viaje</h2>
-          <span className="text-xs text-neutral-500">{expense.length} gasto{expense.length !== 1 ? 's' : ''}</span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-neutral-500">{expense.length} gasto{expense.length !== 1 ? 's' : ''}</span>
+            {!isClosed && (
+              <button
+                onClick={() => setShowAddExpense(true)}
+                className="btn btn-primary flex items-center gap-2 text-sm"
+              >
+                <span className="material-icons text-lg">add</span>
+                Agregar Movimiento
+              </button>
+            )}
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -316,15 +414,25 @@ export default function TripDetail() {
                     <td className="px-6 py-4 text-right font-semibold text-neutral-900 tabular-nums">{formatMoney(m.amount)}</td>
                     <td className="px-4 py-4 text-center">
                       {m.evidence_url ? (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setGalleryIndex(galleryIdx) }}
-                          className="group relative inline-block rounded overflow-hidden border-2 border-neutral-300 hover:border-primary-main transition-colors"
-                        >
-                          <img src={m.evidence_url} alt={`Evidencia: ${m.concept}`} className="w-10 h-10 object-cover" />
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                            <span className="material-icons text-white text-sm opacity-0 group-hover:opacity-100 transition-opacity">zoom_in</span>
-                          </div>
-                        </button>
+                        m.evidence_type === 'audio' ? (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); openReview(m) }}
+                            className="inline-flex items-center justify-center w-10 h-10 rounded border-2 border-neutral-300 hover:border-primary-main bg-neutral-100 text-primary-main transition-colors"
+                            title="Nota de voz"
+                          >
+                            <span className="material-icons">mic</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setGalleryIndex(galleryIdx) }}
+                            className="group relative inline-block rounded overflow-hidden border-2 border-neutral-300 hover:border-primary-main transition-colors"
+                          >
+                            <img src={m.evidence_url} alt={`Evidencia: ${m.concept}`} className="w-10 h-10 object-cover" />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                              <span className="material-icons text-white text-sm opacity-0 group-hover:opacity-100 transition-opacity">zoom_in</span>
+                            </div>
+                          </button>
+                        )
                       ) : (
                         <span className="text-neutral-400">
                           <span className="material-icons text-lg">hide_image</span>
@@ -340,11 +448,12 @@ export default function TripDetail() {
                       {status === 'pending' && !isClosed && (
                         <div className="flex items-center justify-center gap-1.5">
                           <button
-                            onClick={(e) => { e.stopPropagation(); handleApprove(m.id) }}
-                            className="w-8 h-8 flex items-center justify-center rounded text-neutral-400 hover:bg-primary-subtle hover:text-primary-main transition-all"
-                            title="Aprobar"
+                            onClick={(e) => { e.stopPropagation(); openReview(m) }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold text-primary-main hover:bg-primary-subtle transition-all"
+                            title="Revisar y aprobar"
                           >
-                            <span className="material-icons text-lg">check</span>
+                            <span className="material-icons text-base">fact_check</span>
+                            Revisar
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); setRejectTarget(m) }}
@@ -391,6 +500,271 @@ export default function TripDetail() {
         startIndex={galleryIndex ?? 0}
         onClose={() => setGalleryIndex(null)}
       />
+
+      {/* Add movement modal */}
+      {showAddExpense && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-neutral-900/60 backdrop-blur-sm px-4 py-6">
+          <div className="w-full max-w-lg bg-white rounded-xl shadow-dropdown overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-neutral-300/50 px-6 py-4">
+              <h3 className="text-lg font-bold text-neutral-900">Agregar Movimiento</h3>
+              <button onClick={() => { resetExpenseForm(); setShowAddExpense(false) }} className="text-neutral-400 hover:text-neutral-600 transition-colors">
+                <span className="material-icons">close</span>
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-6">
+              <form id="add-movement-form" className="space-y-4" onSubmit={handleAddExpense}>
+                {/* Type toggle */}
+                <div>
+                  <label className="block text-sm font-semibold text-neutral-900 mb-1.5">Tipo</label>
+                  <div className="flex rounded border border-neutral-300 overflow-hidden w-fit">
+                    {[
+                      { value: 'expense', label: 'Gasto', icon: 'trending_down' },
+                      { value: 'income', label: 'Ingreso', icon: 'trending_up' },
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setExpenseForm((f) => ({ ...f, type: opt.value }))}
+                        className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-all ${
+                          expenseForm.type === opt.value
+                            ? opt.value === 'expense'
+                              ? 'bg-error-light text-error-main'
+                              : 'bg-primary-subtle text-primary-main'
+                            : 'bg-white text-neutral-500 hover:bg-neutral-200'
+                        }`}
+                      >
+                        <span className="material-icons text-lg">{opt.icon}</span>
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Concept */}
+                <div>
+                  <label className="block text-sm font-semibold text-neutral-900 mb-1.5">Concepto</label>
+                  <input
+                    type="text"
+                    value={expenseForm.concept}
+                    onChange={(e) => setExpenseForm((f) => ({ ...f, concept: e.target.value }))}
+                    placeholder="ej. Caseta, Diesel, Herramienta, Viaticos..."
+                    className="w-full rounded border border-neutral-300 bg-white px-4 py-2.5 text-sm focus:border-primary-main focus:ring-2 focus:ring-primary-main/20"
+                    autoFocus
+                  />
+                </div>
+
+                {/* Amount + Currency + Date */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-sm font-semibold text-neutral-900 mb-1.5">Monto</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm">$</span>
+                      <input
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        value={expenseForm.amount}
+                        onChange={(e) => setExpenseForm((f) => ({ ...f, amount: e.target.value }))}
+                        placeholder="0.00"
+                        className="w-full rounded border border-neutral-300 bg-white pl-7 pr-3 py-2.5 text-sm tabular-nums focus:border-primary-main focus:ring-2 focus:ring-primary-main/20"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-neutral-900 mb-1.5">Moneda</label>
+                    <select
+                      value={expenseForm.currency}
+                      onChange={(e) => setExpenseForm((f) => ({ ...f, currency: e.target.value }))}
+                      className="w-full rounded border border-neutral-300 bg-white px-4 py-2.5 text-sm focus:border-primary-main focus:ring-2 focus:ring-primary-main/20"
+                    >
+                      <option value="MXN">MXN</option>
+                      <option value="USD">USD</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-neutral-900 mb-1.5">Fecha</label>
+                    <input
+                      type="date"
+                      value={expenseForm.movement_date}
+                      onChange={(e) => setExpenseForm((f) => ({ ...f, movement_date: e.target.value }))}
+                      className="w-full rounded border border-neutral-300 bg-white px-4 py-2.5 text-sm focus:border-primary-main focus:ring-2 focus:ring-primary-main/20"
+                    />
+                  </div>
+                </div>
+
+                {/* Evidence upload */}
+                <div>
+                  <label className="block text-sm font-semibold text-neutral-900 mb-1.5">Evidencia (opcional)</label>
+                  {evidencePreview ? (
+                    <div className="flex items-center gap-3 p-3 rounded border border-neutral-300 bg-white">
+                      <img src={evidencePreview} alt="Preview" className="w-14 h-14 object-cover rounded border border-neutral-200" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-neutral-900 truncate">{expenseForm.evidence?.name}</p>
+                        <p className="text-xs text-neutral-500">
+                          {(expenseForm.evidence?.size / 1024).toFixed(0)} KB
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={removeEvidence}
+                        className="w-8 h-8 flex items-center justify-center rounded text-neutral-400 hover:bg-error-subtle hover:text-error-main transition-all"
+                      >
+                        <span className="material-icons text-lg">delete</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center gap-2 p-5 rounded border-2 border-dashed border-neutral-300 bg-white cursor-pointer hover:border-primary-main hover:bg-primary-subtle/20 transition-all">
+                      <span className="material-icons text-2xl text-neutral-400">cloud_upload</span>
+                      <span className="text-xs text-neutral-500">
+                        Arrastra una imagen o <span className="text-primary-main font-semibold">haz clic para seleccionar</span>
+                      </span>
+                      <span className="text-[10px] text-neutral-400">JPG, PNG o WebP — max 10 MB</span>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={handleEvidenceChange}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
+
+                {/* Error */}
+                {addExpenseError && (
+                  <div className="p-3 bg-error-light text-error-main rounded text-sm font-medium">{addExpenseError}</div>
+                )}
+              </form>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 border-t border-neutral-300/50 bg-neutral-100 px-6 py-4">
+              <button onClick={() => { resetExpenseForm(); setShowAddExpense(false) }} disabled={addingExpense} className="btn btn-ghost">
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                form="add-movement-form"
+                disabled={addingExpense || !expenseForm.concept.trim() || !expenseForm.amount || !expenseForm.movement_date}
+                className="btn btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {addingExpense ? (
+                  <>
+                    <span className="material-icons animate-spin text-lg">progress_activity</span>
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    <span className="material-icons text-lg">add</span>
+                    Agregar Movimiento
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Review & approve modal */}
+      {reviewTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-neutral-900/60 backdrop-blur-sm px-4 py-6">
+          <div className="w-full max-w-lg bg-white rounded-xl shadow-dropdown overflow-hidden">
+            <div className="flex items-center justify-between border-b border-neutral-300/50 px-6 py-4">
+              <h3 className="text-lg font-bold text-neutral-900">Revisar Movimiento</h3>
+              <button onClick={() => setReviewTarget(null)} className="text-neutral-400 hover:text-neutral-600 transition-colors">
+                <span className="material-icons">close</span>
+              </button>
+            </div>
+
+            <div className="px-6 py-6 space-y-4">
+              {/* Media viewer */}
+              {reviewTarget.evidence_url ? (
+                reviewTarget.evidence_type === 'audio' ? (
+                  <div className="rounded border border-neutral-300 bg-neutral-100 p-4 flex items-center gap-3">
+                    <span className="material-icons text-primary-main text-2xl">mic</span>
+                    <audio controls src={reviewTarget.evidence_url} className="flex-1" />
+                  </div>
+                ) : (
+                  <div className="rounded border border-neutral-300 bg-neutral-100 overflow-hidden">
+                    <img src={reviewTarget.evidence_url} alt="Evidencia" className="w-full max-h-80 object-contain bg-neutral-900" />
+                  </div>
+                )
+              ) : (
+                <div className="rounded border border-neutral-300 bg-neutral-100 p-6 text-center text-neutral-500 text-sm">
+                  Sin evidencia adjunta
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-semibold text-neutral-900 mb-1.5">Concepto</label>
+                <input
+                  type="text"
+                  value={reviewConcept}
+                  onChange={(e) => setReviewConcept(e.target.value)}
+                  placeholder="ej. Diesel, Caseta, Viaticos..."
+                  className="w-full rounded border border-neutral-300 bg-white px-4 py-2.5 text-sm focus:border-primary-main focus:ring-2 focus:ring-primary-main/20"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-neutral-900 mb-1.5">Monto</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-sm">$</span>
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={reviewAmount}
+                    onChange={(e) => setReviewAmount(e.target.value)}
+                    placeholder="0.00"
+                    className="w-full rounded border border-neutral-300 bg-white pl-7 pr-3 py-2.5 text-sm tabular-nums focus:border-primary-main focus:ring-2 focus:ring-primary-main/20"
+                  />
+                </div>
+              </div>
+
+              {reviewError && (
+                <div className="p-3 bg-error-light text-error-main rounded text-sm font-medium">{reviewError}</div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between gap-3 border-t border-neutral-300/50 bg-neutral-100 px-6 py-4">
+              <button
+                onClick={() => { setRejectTarget(reviewTarget); setReviewTarget(null) }}
+                disabled={reviewSaving}
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-error-main hover:text-error-dark"
+              >
+                <span className="material-icons text-lg">block</span>
+                Rechazar
+              </button>
+              <div className="flex items-center gap-3">
+                <button onClick={() => setReviewTarget(null)} disabled={reviewSaving} className="btn btn-ghost">
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleReviewApprove}
+                  disabled={reviewSaving || !reviewConcept.trim() || !reviewAmount}
+                  className="btn btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {reviewSaving ? (
+                    <>
+                      <span className="material-icons animate-spin text-lg">progress_activity</span>
+                      Guardando...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-icons text-lg">check</span>
+                      Aprobar
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Close trip confirmation */}
       {confirmClose && (

@@ -105,3 +105,55 @@ async def send_approval_notice(
         f"por *${amount:,.2f} MXN*{folio_str} fue *aprobado*. "
     )
     return await send_text_message(to, body)
+
+
+async def send_trip_started_notice(
+    to: str,
+    driver_name: str,
+    folio: str | None,
+    origin: str,
+    destination: str,
+    client: str | None,
+) -> dict | None:
+    """Notify a driver that a new trip was started for them."""
+    folio_str = f"\nFolio: {folio}" if folio else ""
+    client_str = f"\nCliente: {client}" if client else ""
+    body = (
+        f"🚚 Hola {driver_name}, se ha iniciado un nuevo viaje.{folio_str}\n"
+        f"Origen: {origin}\n"
+        f"Destino: {destination}"
+        f"{client_str}\n\n"
+        f"Envía por este chat los gastos del viaje como *foto del ticket* "
+        f"con el formato *Concepto - Monto* en la descripción.\n"
+        f"Ejemplo: `Gasolina - 500`"
+    )
+    return await send_text_message(to, body)
+
+
+async def send_ack(to: str, message: str) -> dict | None:
+    """Simple acknowledgement message to a driver."""
+    return await send_text_message(to, message)
+
+
+async def download_media(url: str) -> tuple[bytes, str] | None:
+    """Download a media file from a Kapso media URL.
+
+    The URL carries an embedded short-lived token, so no auth header is needed.
+    Returns (bytes, content_type) or None on failure.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
+            resp = await client.get(url)
+            resp.raise_for_status()
+            content_type = resp.headers.get("content-type", "application/octet-stream").split(";")[0].strip()
+            return resp.content, content_type
+    except httpx.HTTPStatusError as exc:
+        logger.error(
+            "Media download error %s: %s",
+            exc.response.status_code,
+            exc.response.text,
+        )
+        return None
+    except Exception as exc:
+        logger.error("Media download failed: %s", exc)
+        return None

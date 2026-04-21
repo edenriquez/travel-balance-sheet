@@ -1,8 +1,16 @@
 """FastAPI app: async routes, domain routers, lifespan."""
 
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+    force=True,
+)
+logging.getLogger("src").setLevel(logging.INFO)
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -14,6 +22,7 @@ from src.drivers.router import router as drivers_router
 from src.notifications.router import router as notifications_router
 from src.trips.router import router as trips_router
 from src.whatsapp.router import router as whatsapp_router
+from src.whatsapp.webhooks import router as whatsapp_webhooks_router
 
 
 @asynccontextmanager
@@ -59,4 +68,5 @@ app.include_router(drivers_router, prefix="/api/drivers", tags=["drivers"])
 app.include_router(trips_router, prefix="/api/trips", tags=["trips"])
 app.include_router(whatsapp_router, prefix="/api/whatsapp", tags=["whatsapp"])
 app.include_router(notifications_router, prefix="/api/notifications", tags=["notifications"])
+app.include_router(whatsapp_webhooks_router, prefix="/webhooks", tags=["webhooks"])
 

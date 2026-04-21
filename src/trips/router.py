@@ -6,8 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.dependencies import get_current_user
 from src.database import get_db
-from src.storage import get_evidence_url, upload_evidence
+from src.storage import evidence_type_for_content, get_evidence_url, upload_evidence
 from src.trips.schemas import (
+    ApproveMovement,
     MovementResponse,
     RejectMovement,
     TripCreate,
@@ -97,10 +98,12 @@ async def post_movement(
     company_id = UUID(current_user["company_id"])
 
     evidence_url: str | None = None
+    evidence_type: str | None = None
     if evidence and evidence.filename:
         file_bytes = await evidence.read()
         object_key = await upload_evidence(file_bytes, evidence.content_type, trip_id)
         evidence_url = get_evidence_url(object_key)
+        evidence_type = evidence_type_for_content(evidence.content_type)
 
     data = {
         "type": type,
@@ -109,6 +112,7 @@ async def post_movement(
         "currency": currency,
         "movement_date": movement_date,
         "evidence_url": evidence_url,
+        "evidence_type": evidence_type,
     }
     return await add_movement(
         session, company_id=company_id, trip_id=UUID(trip_id), data=data
@@ -142,6 +146,7 @@ async def reject_movement_endpoint(
 async def approve_movement_endpoint(
     trip_id: str,
     movement_id: str,
+    body: ApproveMovement | None = None,
     current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_db),
 ):
@@ -151,6 +156,8 @@ async def approve_movement_endpoint(
         company_id=company_id,
         trip_id=UUID(trip_id),
         movement_id=UUID(movement_id),
+        concept=body.concept if body else None,
+        amount=body.amount if body else None,
     )
 
 

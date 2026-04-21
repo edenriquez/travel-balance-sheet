@@ -32,7 +32,7 @@ async def create_pending_evidence_notifications(
     movement_amount,
     currency: str,
 ) -> int:
-    """Notify each accountant in the company. Returns number of rows created."""
+    """Notify each accountant in the company. Idempotent: reuses/reopens existing rows."""
     result = await session.execute(
         select(CompanyMember.user_id).where(
             CompanyMember.company_id == company_id,
@@ -44,9 +44,9 @@ async def create_pending_evidence_notifications(
         return 0
 
     result = await session.execute(
-        select(Notification.user_id).where(Notification.movement_id == movement_id)
+        select(Notification).where(Notification.movement_id == movement_id)
     )
-    already = set(result.scalars().all())
+    existing_by_user = {n.user_id: n for n in result.scalars().all()}
 
     deep_link = _trip_detail_path(trip_id)
     title = "Evidencia pendiente de revisión"
@@ -54,9 +54,16 @@ async def create_pending_evidence_notifications(
         f'Movimiento "{movement_concept}" por {_fmt_amount(movement_amount)} {currency} '
         "requiere tu atención."
     )
-    created = 0
+    touched = 0
     for uid in accountant_ids:
-        if uid in already:
+        existing = existing_by_user.get(uid)
+        if existing is not None:
+            if existing.acknowledged_at is not None:
+                existing.acknowledged_at = None
+                existing.title = title
+                existing.body = body
+                existing.deep_link = deep_link
+                touched += 1
             continue
         n = Notification(
             company_id=company_id,
@@ -69,10 +76,10 @@ async def create_pending_evidence_notifications(
             deep_link=deep_link,
         )
         session.add(n)
-        created += 1
-    if created:
+        touched += 1
+    if touched:
         await session.flush()
-    return created
+    return touched
 
 
 async def ensure_pending_evidence_notifications_for_movement(
