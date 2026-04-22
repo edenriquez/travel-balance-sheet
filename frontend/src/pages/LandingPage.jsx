@@ -1,6 +1,57 @@
 import { Link } from 'react-router-dom'
 import LandingDemo from './LandingDemo'
 
+const plans = [
+  {
+    name: 'Básico',
+    tagline: 'Para operadores pequeños',
+    price: 'MX$499',
+    priceUnit: '/mes',
+    priceFootnote: 'Hasta 5 choferes',
+    features: [
+      'Viajes ilimitados',
+      'WhatsApp para choferes',
+      'Dashboard de aprobaciones',
+      'Evidencia guardada 6 meses',
+      'Soporte por correo',
+    ],
+    cta: 'Solicitar Demo',
+    recommended: false,
+  },
+  {
+    name: 'Flota',
+    tagline: 'Para flotillas en crecimiento',
+    price: 'MX$1,299',
+    priceUnit: '/mes',
+    priceFootnote: 'Hasta 15 choferes',
+    features: [
+      'Todo lo de Básico',
+      'Reportes exportables (CSV/Excel)',
+      'Evidencia guardada 12 meses',
+      'Filtros avanzados por chofer/cliente/ruta',
+      'Soporte prioritario por WhatsApp',
+    ],
+    cta: 'Solicitar Demo',
+    recommended: true,
+  },
+  {
+    name: 'Empresa',
+    tagline: 'Para flotillas grandes',
+    price: 'Cotizar',
+    priceUnit: null,
+    priceFootnote: '16+ choferes',
+    features: [
+      'Todo lo de Flota',
+      'SLA y onboarding dedicado',
+      'Integraciones (ERP/contabilidad)',
+      'Retención de evidencia custom',
+      'Gerente de cuenta asignado',
+    ],
+    cta: 'Hablar con un Experto',
+    recommended: false,
+  },
+]
+
 export default function LandingPage() {
   return (
     <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-white text-neutral-900 font-sans">
@@ -18,6 +69,7 @@ export default function LandingPage() {
           </div>
           <nav className="hidden md:flex items-center gap-8">
             <a className="text-sm font-semibold text-neutral-600 hover:text-primary-main transition-colors" href="#caracteristicas">Herramientas</a>
+            <a className="text-sm font-semibold text-neutral-600 hover:text-primary-main transition-colors" href="#planes">Precios</a>
             <a className="text-sm font-semibold text-neutral-600 hover:text-primary-main transition-colors" href="#testimonio">Testimonios</a>
           </nav>
           <Link
@@ -106,6 +158,63 @@ export default function LandingPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* Pricing */}
+        <section className="px-6 py-20 lg:px-20 bg-white" id="planes">
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-12 text-center max-w-2xl mx-auto">
+              <h2 className="text-3xl font-bold text-neutral-900 mb-3">
+                Precios claros, por chofer
+              </h2>
+              <p className="text-neutral-500">
+                Sin contratos largos, sin costos ocultos. Paga por lo que usas y crece cuando estes listo.
+              </p>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-3 items-stretch">
+              {plans.map((p) => (
+                <div
+                  key={p.name}
+                  className={`relative flex flex-col bg-white rounded-xl p-8 ${
+                    p.recommended
+                      ? 'border-2 border-primary-main shadow-dropdown'
+                      : 'border border-neutral-300/60 shadow-card'
+                  }`}
+                >
+                  {p.recommended && (
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary-main text-white text-[11px] font-bold uppercase tracking-[1px] rounded">
+                      Recomendado
+                    </span>
+                  )}
+                  <h3 className="text-lg font-bold text-neutral-900 mb-1">{p.name}</h3>
+                  <p className="text-sm text-neutral-500 mb-5">{p.tagline}</p>
+                  <p className="text-4xl font-bold text-neutral-900 mb-1">
+                    {p.price}
+                    {p.priceUnit && (
+                      <span className="text-base font-medium text-neutral-500">{p.priceUnit}</span>
+                    )}
+                  </p>
+                  <p className="text-xs text-neutral-500 mb-6">{p.priceFootnote}</p>
+                  <ul className="space-y-2.5 mb-8 flex-1">
+                    {p.features.map((f) => (
+                      <li key={f} className="flex items-start gap-2 text-sm text-neutral-700">
+                        <span className="material-icons text-primary-main text-base mt-0.5">check_circle</span>
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <button className={p.recommended ? 'btn btn-primary w-full' : 'btn btn-soft w-full'}>
+                    {p.cta}
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <p className="mt-10 text-center text-sm text-neutral-500">
+              Precios en MXN, IVA no incluido. Choferes adicionales MX$89/mes. Pago anual: 2 meses gratis.
+            </p>
           </div>
         </section>
 
