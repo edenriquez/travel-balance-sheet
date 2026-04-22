@@ -1,58 +1,11 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import LandingDemo from './LandingDemo'
-
-const plans = [
-  {
-    name: 'Básico',
-    tagline: 'Para operadores pequeños',
-    price: 'MX$499',
-    priceUnit: '/mes',
-    priceFootnote: 'Hasta 5 choferes',
-    features: [
-      'Viajes ilimitados',
-      'WhatsApp para choferes',
-      'Dashboard de aprobaciones',
-      'Evidencia guardada 6 meses',
-      'Soporte por correo',
-    ],
-    cta: 'Solicitar Demo',
-    recommended: false,
-  },
-  {
-    name: 'Flota',
-    tagline: 'Para flotillas en crecimiento',
-    price: 'MX$1,299',
-    priceUnit: '/mes',
-    priceFootnote: 'Hasta 15 choferes',
-    features: [
-      'Todo lo de Básico',
-      'Reportes exportables (CSV/Excel)',
-      'Evidencia guardada 12 meses',
-      'Filtros avanzados por chofer/cliente/ruta',
-      'Soporte prioritario por WhatsApp',
-    ],
-    cta: 'Solicitar Demo',
-    recommended: true,
-  },
-  {
-    name: 'Empresa',
-    tagline: 'Para flotillas grandes',
-    price: 'Cotizar',
-    priceUnit: null,
-    priceFootnote: '16+ choferes',
-    features: [
-      'Todo lo de Flota',
-      'SLA y onboarding dedicado',
-      'Integraciones (ERP/contabilidad)',
-      'Retención de evidencia custom',
-      'Gerente de cuenta asignado',
-    ],
-    cta: 'Hablar con un Experto',
-    recommended: false,
-  },
-]
+import { plans } from './plans'
+import PlanCard from './PlanCard'
 
 export default function LandingPage() {
+  const navigate = useNavigate()
+  const goOnboarding = (planId) => navigate(`/onboarding?plan=${planId}`)
   return (
     <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-white text-neutral-900 font-sans">
       {/* Header */}
@@ -105,12 +58,15 @@ export default function LandingPage() {
                   Tus operadores reportan gastos por WhatsApp. Tu revisas y apruebas desde el dashboard. Sin apps, sin capacitacion, sin friccion.
                 </p>
                 <div className="flex gap-4 mt-2">
-                  <button className="btn btn-primary text-base px-8 py-3 h-auto">
+                  <button
+                    onClick={() => goOnboarding('pyme')}
+                    className="btn btn-primary text-base px-8 py-3 h-auto"
+                  >
                     Solicitar Demo
                   </button>
-                  <button className="px-8 py-3 rounded border-2 border-white/30 text-white font-bold text-base hover:bg-white/10 transition-all">
-                    Ver Funcionamiento
-                  </button>
+                  <a href="#planes" className="px-8 py-3 rounded border-2 border-white/30 text-white font-bold text-base hover:bg-white/10 transition-all">
+                    Ver Planes
+                  </a>
                 </div>
               </div>
             </div>
@@ -175,40 +131,12 @@ export default function LandingPage() {
 
             <div className="grid gap-6 md:grid-cols-3 items-stretch">
               {plans.map((p) => (
-                <div
-                  key={p.name}
-                  className={`relative flex flex-col bg-white rounded-xl p-8 ${
-                    p.recommended
-                      ? 'border-2 border-primary-main shadow-dropdown'
-                      : 'border border-neutral-300/60 shadow-card'
-                  }`}
-                >
-                  {p.recommended && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary-main text-white text-[11px] font-bold uppercase tracking-[1px] rounded">
-                      Recomendado
-                    </span>
-                  )}
-                  <h3 className="text-lg font-bold text-neutral-900 mb-1">{p.name}</h3>
-                  <p className="text-sm text-neutral-500 mb-5">{p.tagline}</p>
-                  <p className="text-4xl font-bold text-neutral-900 mb-1">
-                    {p.price}
-                    {p.priceUnit && (
-                      <span className="text-base font-medium text-neutral-500">{p.priceUnit}</span>
-                    )}
-                  </p>
-                  <p className="text-xs text-neutral-500 mb-6">{p.priceFootnote}</p>
-                  <ul className="space-y-2.5 mb-8 flex-1">
-                    {p.features.map((f) => (
-                      <li key={f} className="flex items-start gap-2 text-sm text-neutral-700">
-                        <span className="material-icons text-primary-main text-base mt-0.5">check_circle</span>
-                        <span>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <button className={p.recommended ? 'btn btn-primary w-full' : 'btn btn-soft w-full'}>
-                    {p.cta}
-                  </button>
-                </div>
+                <PlanCard
+                  key={p.id}
+                  plan={p}
+                  buttonLabel="Contratar"
+                  onClick={() => goOnboarding(p.id)}
+                />
               ))}
             </div>
 
@@ -243,10 +171,16 @@ export default function LandingPage() {
               Unete a las empresas transportistas que ya dejaron el Excel y las juntas de cuadre.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <button className="btn btn-primary text-base px-10 py-3 h-auto">
+              <button
+                onClick={() => goOnboarding('pyme')}
+                className="btn btn-primary text-base px-10 py-3 h-auto"
+              >
                 Solicitar Demo
               </button>
-              <button className="btn btn-ghost text-base px-10 py-3 h-auto border border-neutral-300">
+              <button
+                onClick={() => goOnboarding('empresa')}
+                className="btn btn-ghost text-base px-10 py-3 h-auto border border-neutral-300"
+              >
                 Hablar con un Experto
               </button>
             </div>

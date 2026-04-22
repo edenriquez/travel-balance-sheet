@@ -117,3 +117,17 @@ export async function acknowledgeNotification(notificationId) {
     body: JSON.stringify({ acknowledged: true }),
   })
 }
+
+export async function onboardingRegister({ plan, company_name, admin_name, email, password }) {
+  return api('/api/onboarding/register', {
+    method: 'POST',
+    body: JSON.stringify({ plan, company_name, admin_name, email, password }),
+  })
+}
+
+export async function onboardingActivate({ card_name, card_number, expiry, cvv }) {
+  return api('/api/onboarding/activate', {
+    method: 'POST',
+    body: JSON.stringify({ card_name, card_number, expiry, cvv }),
+  })
+}

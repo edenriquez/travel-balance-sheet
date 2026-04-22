@@ -8,6 +8,7 @@ import Members from './pages/Members'
 import SetPassword from './pages/SetPassword'
 import MapView from './pages/MapView'
 import LandingPage from './pages/LandingPage'
+import Onboarding from './pages/Onboarding'
 import { getUser, setAuth, clearAuth } from './auth'
 
 function useAuth() {
@@ -38,6 +39,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/landing" element={<LandingPage />} />
+      <Route path="/onboarding" element={<Onboarding />} />
       <Route path="/login" element={<Login useAuth={useAuth} />} />
       <Route path="/establecer-contrasena" element={<SetPassword />} />
       <Route
