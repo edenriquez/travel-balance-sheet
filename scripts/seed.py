@@ -220,7 +220,7 @@ async def seed(session: AsyncSession) -> None:
 
 async def reset(session: AsyncSession) -> None:
     """Delete seed data in FK-safe order."""
-    for table in ("movement", "trip", "company_member", "driver", "whatsapp_session", "company", "user"):
+    for table in ("movement", "trip", "company_member", "driver", "whatsapp_session", "company", '"user"'):
         await session.execute(text(f"DELETE FROM {table}"))
     await session.commit()
     print("Tables cleared.")
